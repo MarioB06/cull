@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Cull",
+    "slug": "cull",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "cull",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#15110d",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cull.app",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Cull braucht Zugriff auf deine Fotos, um sie hier durchzugehen und auszumisten. Es verlässt nichts dein Gerät.",
+        "NSPhotoLibraryAddUsageDescription": "Cull braucht Zugriff auf deine Fotomediathek, um markierte Fotos zu entfernen. Es verlässt nichts dein Gerät."
+      }
+    },
+    "android": {
+      "package": "com.cull.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#15110d",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Cull braucht Zugriff auf deine Fotos, um sie hier durchzugehen und auszumisten. Es verlässt nichts dein Gerät.",
+          "savePhotosPermission": "Cull braucht Zugriff auf deine Fotomediathek, um markierte Fotos zu entfernen.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
+      "expo-sqlite",
+      "expo-image",
+      "expo-font"
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
