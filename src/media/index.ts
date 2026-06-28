@@ -1,10 +1,10 @@
-// SDK 56: die klassische API liegt unter dem /legacy-Einstieg. Die neue
-// Query/Asset-Klassen-API der Hauptexporte wirft die alten Funktionen zur Laufzeit.
-import * as MediaLibrary from 'expo-media-library/legacy';
+// SDK 54: expo-media-library exportiert die klassische API direkt; bei
+// expo-file-system liegt die klassische (getInfoAsync) API unter /legacy.
+import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system/legacy';
 import type { SortOrder } from '../db/settings';
 
-export type { Asset } from 'expo-media-library/legacy';
+export type { Asset } from 'expo-media-library';
 
 export type PermissionState = 'undetermined' | 'granted' | 'limited' | 'denied';
 

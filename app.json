@@ -41,7 +41,6 @@
         }
       ],
       "expo-sqlite",
-      "expo-image",
       "expo-font"
     ],
     "web": {
