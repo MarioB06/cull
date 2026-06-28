@@ -121,7 +121,11 @@ const styles = StyleSheet.create({
     left: 0,
     width: '100%',
     height: '100%',
-    opacity: 0.5,
+    // Dezent halten: ohne echten Blend würde 0.5 das Foto zukleistern.
+    // soft-light blendet das Rauschen filmisch ein, wo unterstützt; sonst
+    // ist die niedrige Opacity kaum sichtbar (Bild bleibt klar erkennbar).
+    opacity: 0.08,
+    mixBlendMode: 'soft-light',
   },
   gradient: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '50%' },
   frameWrap: { position: 'absolute', top: 14, left: 14, right: 14 },
