@@ -14,7 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../../App';
-import { colors, fonts, radius, shadow, spacing } from '../theme';
+import { colors, font, radius, spacing } from '../theme';
 import { APP_NAME } from '../constants';
 import { useStore } from '../state/store';
 import { usePurchasesStore } from '../state/purchases';
@@ -23,6 +23,7 @@ import type { SortOrder } from '../db/settings';
 import { sumFreedBytesLifetime } from '../db/decisions';
 import { formatSize } from '../utils/format';
 import Screen from '../components/Screen';
+import { Glass } from '../components/Glass';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -99,10 +100,12 @@ export default function SettingsScreen() {
   );
 
   return (
-    <Screen>
+    <Screen glow>
       <View style={styles.header}>
-        <Pressable onPress={() => nav.goBack()} hitSlop={10} style={styles.backBtn}>
-          <Feather name="chevron-left" size={22} color={colors.cream} />
+        <Pressable onPress={() => nav.goBack()} hitSlop={10}>
+          <Glass style={styles.backBtn}>
+            <Feather name="chevron-left" size={22} color={colors.text} />
+          </Glass>
         </Pressable>
         <View style={styles.headerText}>
           <Text style={styles.title}>Einstellungen</Text>
@@ -116,22 +119,23 @@ export default function SettingsScreen() {
           <Section label="CULL PRO">
             <View style={styles.row}>
               <Text style={styles.rowLabel}>{APP_NAME} Pro aktiv</Text>
-              <Feather name="check" size={18} color={colors.greenText} />
+              <Feather name="check" size={18} color={colors.keepText} />
             </View>
           </Section>
         ) : (
-          <Pressable
-            style={({ pressed }) => [styles.promoCard, pressed && styles.promoCardPressed]}
-            onPress={openPaywall}
-          >
-            <View style={styles.promoIcon}>
-              <Feather name="zap" size={18} color={colors.accent} />
-            </View>
-            <View style={styles.rowTextWrap}>
-              <Text style={styles.promoTitle}>{APP_NAME} Pro freischalten</Text>
-              <Text style={styles.promoHint}>Unbegrenzt löschen · Album-Filter · Videos · mehr</Text>
-            </View>
-            <Feather name="chevron-right" size={18} color={colors.accent} />
+          <Pressable onPress={openPaywall}>
+            {({ pressed }) => (
+              <Glass tint={colors.glassStrong} border={colors.glassBorderStrong} style={[styles.promoCard, pressed && styles.pressed]}>
+                <View style={styles.promoIcon}>
+                  <Feather name="zap" size={18} color={colors.accent} />
+                </View>
+                <View style={styles.rowTextWrap}>
+                  <Text style={styles.promoTitle}>{APP_NAME} Pro freischalten</Text>
+                  <Text style={styles.promoHint}>Unbegrenzt löschen · Album-Filter · Videos · mehr</Text>
+                </View>
+                <Feather name="chevron-right" size={18} color={colors.accent} />
+              </Glass>
+            )}
           </Pressable>
         )}
 
@@ -178,7 +182,7 @@ export default function SettingsScreen() {
             <Feather
               name={showAlbums ? 'chevron-up' : 'chevron-down'}
               size={18}
-              color={colors.cream40}
+              color={colors.textFaint}
             />
           </Pressable>
 
@@ -190,7 +194,7 @@ export default function SettingsScreen() {
                 onPress={() => pickAlbum(null)}
               />
               {albums === null ? (
-                <ActivityIndicator color={colors.cream40} style={{ marginVertical: 12 }} />
+                <ActivityIndicator color={colors.textFaint} style={{ marginVertical: 12 }} />
               ) : (
                 albums.map((a) => (
                   <AlbumOption
@@ -214,7 +218,7 @@ export default function SettingsScreen() {
               <Text style={styles.rowHint}>Screenshots · grosse Dateien · Duplikate</Text>
             </View>
             {isPro ? (
-              <Feather name="chevron-right" size={18} color={colors.cream40} />
+              <Feather name="chevron-right" size={18} color={colors.textFaint} />
             ) : (
               <ProBadge />
             )}
@@ -222,7 +226,7 @@ export default function SettingsScreen() {
           <Pressable style={styles.row} onPress={onStats}>
             <Text style={styles.rowLabel}>Freigegebener Speicher</Text>
             {isPro ? (
-              <Feather name="chevron-right" size={18} color={colors.cream40} />
+              <Feather name="chevron-right" size={18} color={colors.textFaint} />
             ) : (
               <ProBadge />
             )}
@@ -232,19 +236,19 @@ export default function SettingsScreen() {
         {/* Verlauf */}
         <Section label="VERLAUF">
           <Pressable style={styles.row} onPress={confirmReset}>
-            <Text style={[styles.rowLabel, { color: colors.redText }]}>Verlauf zurücksetzen</Text>
-            <Feather name="rotate-ccw" size={18} color={colors.redText} />
+            <Text style={[styles.rowLabel, { color: colors.deleteText }]}>Verlauf zurücksetzen</Text>
+            <Feather name="rotate-ccw" size={18} color={colors.deleteText} />
           </Pressable>
         </Section>
 
         {/* Sicherer Hinweis */}
-        <View style={styles.note}>
-          <Feather name="shield" size={14} color={colors.cream40} />
+        <Glass style={styles.note}>
+          <Feather name="shield" size={14} color={colors.textFaint} />
           <Text style={styles.noteText}>
             Gelöschte Fotos landen auf iOS für 30 Tage in „Zuletzt gelöscht" — nichts ist sofort
             für immer weg. Alles passiert lokal; {APP_NAME} sendet nichts an irgendeinen Server.
           </Text>
-        </View>
+        </Glass>
       </ScrollView>
     </Screen>
   );
@@ -262,7 +266,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   return (
     <View style={styles.section}>
       <Text style={styles.sectionLabel}>{label}</Text>
-      <View style={styles.card}>{children}</View>
+      <Glass style={styles.card}>{children}</Glass>
     </View>
   );
 }
@@ -287,9 +291,9 @@ function ToggleRow({
       <Switch
         value={value}
         onValueChange={onChange}
-        trackColor={{ false: colors.cream13, true: colors.accent }}
-        thumbColor={colors.cream}
-        ios_backgroundColor={colors.cream13}
+        trackColor={{ false: 'rgba(255,255,255,0.18)', true: colors.accent }}
+        thumbColor={colors.white}
+        ios_backgroundColor="rgba(255,255,255,0.18)"
       />
     </View>
   );
@@ -350,8 +354,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.screenH,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.cream13,
     gap: 12,
   },
   headerSpacer: { width: 40 },
@@ -359,53 +361,39 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.cream25,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerText: { flex: 1, alignItems: 'center' },
-  title: { fontFamily: fonts.sans600, fontSize: 16, color: colors.cream },
+  title: { fontFamily: font.sansMed, fontSize: 16, color: colors.text },
 
   scroll: { padding: spacing.screenH, paddingBottom: 40, gap: 22 },
   section: { gap: 9 },
   sectionLabel: {
-    fontFamily: fonts.mono500,
+    fontFamily: font.monoMed,
     fontSize: 10,
     letterSpacing: 1.6,
-    color: colors.cream40,
+    color: colors.textFaint,
     marginLeft: 2,
   },
-  card: {
-    backgroundColor: 'rgba(236,227,212,0.04)',
-    borderRadius: radius.button,
-    borderWidth: 1,
-    borderColor: colors.cream13,
-    overflow: 'hidden',
-    ...shadow.raised,
-  },
+  card: { padding: 0 },
+  pressed: { opacity: 0.85 },
   promoCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     padding: 14,
-    borderRadius: radius.button,
-    borderWidth: 1,
-    borderColor: colors.accentBorder,
-    backgroundColor: colors.accentBg,
-    ...shadow.glow(colors.accent),
   },
-  promoCardPressed: { opacity: 0.85 },
   promoIcon: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: 'rgba(240,168,64,0.18)',
+    backgroundColor: 'rgba(194,84,63,0.16)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  promoTitle: { fontFamily: fonts.sans600, fontSize: 14, color: colors.cream },
-  promoHint: { fontFamily: fonts.mono400, fontSize: 11, color: colors.cream55, marginTop: 2 },
+  promoTitle: { fontFamily: font.sansSemi, fontSize: 14, color: colors.text },
+  promoHint: { fontFamily: font.mono, fontSize: 11, color: colors.textDim, marginTop: 2 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -415,17 +403,17 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   rowTextWrap: { flex: 1, gap: 2 },
-  rowLabel: { fontFamily: fonts.sans500, fontSize: 14, color: colors.cream },
-  rowHint: { fontFamily: fonts.mono400, fontSize: 11, color: colors.cream40 },
+  rowLabel: { fontFamily: font.sansMed, fontSize: 14, color: colors.text },
+  rowHint: { fontFamily: font.mono, fontSize: 11, color: colors.textFaint },
   proBadge: {
-    borderWidth: 1,
-    borderColor: colors.accentBorder,
-    backgroundColor: colors.accentBg,
-    borderRadius: radius.pill,
+    borderWidth: 0.5,
+    borderColor: colors.glassBorder,
+    backgroundColor: colors.glass,
+    borderRadius: radius.circle,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  proBadgeText: { fontFamily: fonts.mono600, fontSize: 9, letterSpacing: 0.8, color: colors.accent },
+  proBadgeText: { fontFamily: font.monoSemi, fontSize: 9, letterSpacing: 0.8, color: colors.accent },
 
   segmented: { flexDirection: 'row', padding: 5, gap: 5 },
   segment: {
@@ -435,11 +423,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'transparent',
   },
-  segmentActive: { backgroundColor: colors.accentBg, borderWidth: 1, borderColor: colors.accentBorder },
-  segmentText: { fontFamily: fonts.sans500, fontSize: 13, color: colors.cream40 },
-  segmentTextActive: { color: colors.accent },
+  segmentActive: { backgroundColor: 'rgba(255,255,255,0.12)' },
+  segmentText: { fontFamily: font.sansMed, fontSize: 13, color: colors.textFaint },
+  segmentTextActive: { color: colors.text },
 
-  albumList: { borderTopWidth: 1, borderTopColor: colors.cream13, paddingVertical: 4 },
+  albumList: { borderTopWidth: 0.5, borderTopColor: colors.glassBorder, paddingVertical: 4 },
   albumOption: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -448,15 +436,13 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     gap: 12,
   },
-  albumTitle: { flex: 1, fontFamily: fonts.sans400, fontSize: 13, color: colors.cream55 },
-  albumTitleActive: { color: colors.cream, fontFamily: fonts.sans600 },
+  albumTitle: { flex: 1, fontFamily: font.sans, fontSize: 13, color: colors.textDim },
+  albumTitleActive: { color: colors.text, fontFamily: font.sansSemi },
 
   note: {
     flexDirection: 'row',
     gap: 10,
     padding: 14,
-    borderRadius: radius.button,
-    backgroundColor: 'rgba(236,227,212,0.03)',
   },
-  noteText: { flex: 1, fontFamily: fonts.mono400, fontSize: 11, lineHeight: 17, color: colors.cream40 },
+  noteText: { flex: 1, fontFamily: font.mono, fontSize: 11, lineHeight: 17, color: colors.textFaint },
 });
