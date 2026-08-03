@@ -1,17 +1,17 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Alert, ActivityIndicator, Linking } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../../App';
-import { colors, fonts, radius, shadow, spacing } from '../theme';
+import { colors, font, radius, spacing } from '../theme';
 import { APP_NAME, TERMS_URL, PRIVACY_URL } from '../constants';
 import { usePurchasesStore } from '../state/purchases';
 import type { PackageId, PurchasesPackageInfo } from '../purchases/types';
 import { formatSize } from '../utils/format';
-import Screen from '../components/Screen';
+import AmbientScreen from '../components/AmbientScreen';
+import { Glass } from '../components/Glass';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type PaywallRoute = RouteProp<RootStackParamList, 'Paywall'>;
@@ -65,36 +65,34 @@ export default function PaywallScreen() {
 
   if (!ready) {
     return (
-      <Screen>
+      <AmbientScreen>
         <View style={styles.center}>
-          <ActivityIndicator color={colors.cream} />
+          <ActivityIndicator color={colors.text} />
         </View>
-      </Screen>
+      </AmbientScreen>
     );
   }
 
   if (isPro) {
     return (
-      <Screen>
+      <AmbientScreen>
         <CloseHeader onClose={close} />
         <View style={styles.center}>
-          <View style={styles.successIcon}>
-            <Feather name="check" size={28} color={colors.greenText} />
-          </View>
-          <Text style={styles.headline}>{APP_NAME} Pro ist aktiv</Text>
-          <Text style={styles.body}>Alle Pro-Funktionen sind bereits freigeschaltet.</Text>
+          <Glass style={styles.panel}>
+            <View style={styles.successIcon}>
+              <Feather name="check" size={26} color={colors.keepText} />
+            </View>
+            <Text style={styles.headline}>{APP_NAME} Pro ist aktiv</Text>
+            <Text style={styles.body}>Alle Pro-Funktionen sind bereits freigeschaltet.</Text>
+          </Glass>
         </View>
-      </Screen>
+      </AmbientScreen>
     );
   }
 
   return (
-    <Screen>
-      <LinearGradient
-        colors={[colors.accentBg, 'transparent']}
-        style={styles.glow}
-        pointerEvents="none"
-      />
+    <AmbientScreen>
+      <View style={styles.scrim} pointerEvents="none" />
       <CloseHeader onClose={close} />
       <ScrollView contentContainerStyle={styles.scroll}>
         {isMock && (
@@ -107,7 +105,8 @@ export default function PaywallScreen() {
         <View style={styles.hero}>
           {freedBytes != null && freedBytes > 0 ? (
             <>
-              <Text style={styles.heroNumber}>{formatSize(freedBytes)} freigemacht.</Text>
+              <Text style={styles.heroNumber}>{formatSize(freedBytes)}</Text>
+              <Text style={styles.heroLabel}>freigemacht.</Text>
               <Text style={styles.heroSub}>Mach weiter mit {APP_NAME} Pro.</Text>
             </>
           ) : (
@@ -116,24 +115,22 @@ export default function PaywallScreen() {
         </View>
 
         {/* Features */}
-        <View style={styles.features}>
+        <Glass style={styles.featuresPanel}>
           {FEATURES.map((f) => (
             <View key={f} style={styles.featureRow}>
-              <View style={styles.featureCheck}>
-                <Feather name="check" size={12} color={colors.accent} />
-              </View>
+              <Feather name="check" size={15} color={colors.check} />
               <Text style={styles.featureText}>{f}</Text>
             </View>
           ))}
-        </View>
+        </Glass>
 
-        {/* Pakete */}
+        {/* Pakete — gestapelt */}
         {offering ? (
           <View style={styles.cards}>
             <PackageCard
               label="Lifetime"
               price={offering.lifetime?.priceString ?? '—'}
-              sublabel="Einmalig — für immer"
+              sublabel="einmalig — für immer"
               recommended
               selected={selected === 'lifetime'}
               onPress={() => setSelected('lifetime')}
@@ -156,7 +153,7 @@ export default function PaywallScreen() {
           <Text style={styles.hint}>Kauf einmalig, kein Abo-Zwang.</Text>
         )}
 
-        {/* Haupt-CTA */}
+        {/* Haupt-CTA — der einzige solide Button */}
         <Pressable
           style={({ pressed }) => [
             styles.cta,
@@ -173,17 +170,16 @@ export default function PaywallScreen() {
           )}
         </Pressable>
 
-        {/* Restore */}
-        <Pressable onPress={onRestore} disabled={purchasing || restoring} hitSlop={8} style={styles.restoreBtn}>
-          {restoring ? (
-            <ActivityIndicator color={colors.cream40} size="small" />
-          ) : (
-            <Text style={styles.restoreText}>Käufe wiederherstellen</Text>
-          )}
-        </Pressable>
-
-        {/* Rechtliches */}
+        {/* Restore + Rechtliches */}
         <View style={styles.legalRow}>
+          <Pressable onPress={onRestore} disabled={purchasing || restoring} hitSlop={8}>
+            {restoring ? (
+              <ActivityIndicator color={colors.textFaint} size="small" />
+            ) : (
+              <Text style={styles.legalText}>Käufe wiederherstellen</Text>
+            )}
+          </Pressable>
+          <Text style={styles.legalDot}>·</Text>
           <Pressable onPress={() => TERMS_URL && Linking.openURL(TERMS_URL)} hitSlop={6}>
             <Text style={styles.legalText}>Nutzungsbedingungen</Text>
           </Pressable>
@@ -193,15 +189,17 @@ export default function PaywallScreen() {
           </Pressable>
         </View>
       </ScrollView>
-    </Screen>
+    </AmbientScreen>
   );
 }
 
 function CloseHeader({ onClose }: { onClose: () => void }) {
   return (
     <View style={styles.header}>
-      <Pressable onPress={onClose} hitSlop={10} style={styles.closeBtn}>
-        <Feather name="x" size={20} color={colors.cream} />
+      <Pressable onPress={onClose} hitSlop={10}>
+        <Glass style={styles.closeBtn}>
+          <Feather name="x" size={17} color={colors.text} />
+        </Glass>
       </Pressable>
     </View>
   );
@@ -223,39 +221,43 @@ function PackageCard({
   onPress: () => void;
 }) {
   return (
-    <Pressable
-      style={[styles.card, recommended && styles.cardRecommended, selected && styles.cardSelected]}
-      onPress={onPress}
-    >
-      {recommended && (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>EMPFOHLEN</Text>
+    <Pressable onPress={onPress}>
+      <Glass
+        tint={recommended ? colors.deleteGlass : colors.glass}
+        border={recommended ? 'rgba(226,120,95,0.7)' : colors.glassBorder}
+        style={[styles.card, recommended && styles.cardRecommended, selected && styles.cardSelected]}
+      >
+        {recommended && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>EMPFOHLEN</Text>
+          </View>
+        )}
+        <View style={styles.cardRow}>
+          <Text style={styles.cardLabel}>{label}</Text>
+          <Text style={styles.cardPrice}>{price}</Text>
         </View>
-      )}
-      <Text style={styles.cardLabel}>{label}</Text>
-      <Text style={styles.cardPrice}>{price}</Text>
-      <Text style={styles.cardSub}>{sublabel}</Text>
+        <Text style={styles.cardSub}>{sublabel}</Text>
+      </Glass>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, padding: 32 },
-  glow: {
+  scrim: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 340,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.18)',
   },
+  panel: { alignItems: 'center', padding: 28, gap: 10, width: '100%', maxWidth: 360 },
   header: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: spacing.screenH, paddingTop: 8 },
   closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.cream13,
-    backgroundColor: 'rgba(236,227,212,0.05)',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -265,97 +267,79 @@ const styles = StyleSheet.create({
   mockBadge: {
     alignSelf: 'center',
     borderWidth: 1,
-    borderColor: colors.redBorder40,
-    backgroundColor: colors.redFillBg,
-    borderRadius: radius.pill,
+    borderColor: colors.deleteGlassBorder,
+    backgroundColor: colors.deleteGlass,
+    borderRadius: radius.circle,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  mockBadgeText: { fontFamily: fonts.mono500, fontSize: 10, letterSpacing: 1, color: colors.redText },
+  mockBadgeText: { fontFamily: font.monoMed, fontSize: 10, letterSpacing: 1, color: colors.deleteText },
 
-  hero: { alignItems: 'center', gap: 4, marginTop: 4 },
-  heroNumber: { fontFamily: fonts.mono600, fontSize: 32, color: colors.accentBright, textAlign: 'center' },
-  heroSub: { fontFamily: fonts.sans500, fontSize: 16, color: colors.creamHi, textAlign: 'center' },
-  heroTitle: { fontFamily: fonts.sans600, fontSize: 26, color: colors.cream, textAlign: 'center' },
+  hero: { alignItems: 'center', gap: 2, marginTop: 4 },
+  heroNumber: { fontFamily: font.monoSemi, fontSize: 38, color: colors.text, textAlign: 'center' },
+  heroLabel: { fontFamily: font.sansMed, fontSize: 18, color: colors.text, textAlign: 'center' },
+  heroSub: { fontFamily: font.sans, fontSize: 14, color: colors.textDim, textAlign: 'center', marginTop: 6 },
+  heroTitle: { fontFamily: font.sansSemi, fontSize: 26, color: colors.text, textAlign: 'center' },
 
   successIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: colors.greenFillBg,
-    backgroundColor: colors.greenFillBg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.keepGlass,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
   },
-  headline: { fontFamily: fonts.sans500, fontSize: 19, color: colors.cream, textAlign: 'center' },
-  body: { fontFamily: fonts.sans400, fontSize: 14, color: colors.cream55, textAlign: 'center' },
+  headline: { fontFamily: font.sansMed, fontSize: 19, color: colors.text, textAlign: 'center' },
+  body: { fontFamily: font.sans, fontSize: 14, color: colors.textDim, textAlign: 'center' },
 
-  features: { gap: 12 },
+  featuresPanel: { padding: 16, gap: 12 },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  featureCheck: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: colors.accentBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featureText: { fontFamily: fonts.sans400, fontSize: 14, color: colors.creamHi, flex: 1 },
+  featureText: { fontFamily: font.sans, fontSize: 14, color: colors.text, flex: 1 },
 
-  cards: { flexDirection: 'row', gap: 12 },
+  cards: { gap: 12 },
   card: {
-    flex: 1,
-    borderRadius: radius.button,
-    borderWidth: 1,
-    borderColor: colors.cream13,
-    backgroundColor: 'rgba(236,227,212,0.04)',
     padding: 16,
     gap: 4,
-    ...shadow.raised,
   },
-  cardRecommended: { borderColor: colors.accentBorder },
-  cardSelected: { borderWidth: 2, borderColor: colors.accent, ...shadow.glow(colors.accent) },
+  cardRecommended: { borderWidth: 1.5 },
+  cardSelected: { borderWidth: 1.5, borderColor: colors.white },
+  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   badge: {
     alignSelf: 'flex-start',
     backgroundColor: colors.accent,
-    borderRadius: radius.pill,
+    borderRadius: radius.circle,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  badgeText: { fontFamily: fonts.mono600, fontSize: 9, letterSpacing: 0.8, color: colors.onAccent },
-  cardLabel: { fontFamily: fonts.sans600, fontSize: 15, color: colors.cream },
-  cardPrice: { fontFamily: fonts.mono500, fontSize: 18, color: colors.cream, marginTop: 4 },
-  cardSub: { fontFamily: fonts.mono400, fontSize: 11, color: colors.cream40 },
+  badgeText: { fontFamily: font.monoSemi, fontSize: 9, letterSpacing: 0.8, color: colors.onAccent },
+  cardLabel: { fontFamily: font.sansSemi, fontSize: 15, color: colors.text },
+  cardPrice: { fontFamily: font.monoMed, fontSize: 16, color: colors.text },
+  cardSub: { fontFamily: font.mono, fontSize: 11, color: colors.textFaint },
 
   unavailable: {
-    fontFamily: fonts.sans400,
+    fontFamily: font.sans,
     fontSize: 13,
-    color: colors.cream55,
+    color: colors.textDim,
     textAlign: 'center',
     lineHeight: 19,
   },
 
-  hint: { fontFamily: fonts.mono400, fontSize: 11, color: colors.cream40, textAlign: 'center', marginTop: -8 },
+  hint: { fontFamily: font.mono, fontSize: 11, color: colors.textFaint, textAlign: 'center', marginTop: -8 },
 
   cta: {
     backgroundColor: colors.accent,
-    borderRadius: radius.button,
+    borderRadius: radius.panel,
     paddingVertical: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadow.glow(colors.accent),
   },
   ctaPressed: { opacity: 0.88 },
   ctaDisabled: { opacity: 0.5 },
-  ctaText: { fontFamily: fonts.sans600, fontSize: 16, color: colors.onAccent },
+  ctaText: { fontFamily: font.sansSemi, fontSize: 16, color: colors.onAccent },
 
-  restoreBtn: { alignItems: 'center', paddingVertical: 4 },
-  restoreText: { fontFamily: fonts.mono500, fontSize: 12, color: colors.cream40 },
-
-  legalRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 4 },
-  legalText: { fontFamily: fonts.mono400, fontSize: 11, color: colors.cream30 },
-  legalDot: { fontFamily: fonts.mono400, fontSize: 11, color: colors.cream30 },
+  legalRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  legalText: { fontFamily: font.mono, fontSize: 11, color: colors.textFaint },
+  legalDot: { fontFamily: font.mono, fontSize: 11, color: colors.textFaint },
 });
