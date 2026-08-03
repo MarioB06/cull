@@ -20,7 +20,9 @@ import type { RootStackParamList } from '../../App';
 import { colors, fonts, radius, spacing } from '../theme';
 import { DRY_RUN } from '../constants';
 import { useStore } from '../state/store';
-import { getQueue } from '../db/decisions';
+import { usePurchasesStore } from '../state/purchases';
+import { canCommitDelete } from '../purchases/gating';
+import { getQueue, countDeletedLifetime } from '../db/decisions';
 import type { DecisionRow } from '../db/index';
 import { getUriById } from '../media';
 import { formatFreedSize, fileNameFromUri } from '../utils/format';
@@ -31,6 +33,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 export default function QueueScreen() {
   const nav = useNavigation<Nav>();
   const store = useStore();
+  const { isPro } = usePurchasesStore();
   const [rows, setRows] = useState<DecisionRow[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -58,6 +61,18 @@ export default function QueueScreen() {
 
   const onCommit = useCallback(async () => {
     if (rows.length === 0 || deleting) return;
+
+    // Limit-Trigger: würde diese Charge das Free-Limit überschreiten, gar nicht erst
+    // löschen (kein Off-by-one-Abschnitt mitten im Batch) — stattdessen die Paywall.
+    const allowed = await canCommitDelete(rows.length, isPro);
+    if (!allowed) {
+      nav.navigate('Paywall', {});
+      return;
+    }
+
+    // Für den Freed-Space-Aufhänger: war das die allererste jemals abgeschlossene Löschung?
+    const wasFirstEver = !isPro && (await countDeletedLifetime()) === 0;
+
     hapticDelete();
     setDeleting(true);
     try {
@@ -73,12 +88,17 @@ export default function QueueScreen() {
         await load();
         if (result.deletedIds.length > 0) {
           nav.goBack();
+          // Value-first: den Freed-Space-Moment nur nach der allerersten Löschung als
+          // Paywall-Aufhänger zeigen, nicht bei jedem Commit.
+          if (wasFirstEver) {
+            nav.navigate('Paywall', { freedBytes: result.freedBytes });
+          }
         }
       }
     } finally {
       setDeleting(false);
     }
-  }, [rows.length, deleting, store, load, nav]);
+  }, [rows.length, deleting, isPro, store, load, nav]);
 
   const freed = formatFreedSize(rows.map((r) => r.file_size));
   const count = rows.length;

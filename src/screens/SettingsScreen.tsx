@@ -18,17 +18,51 @@ import type { RootStackParamList } from '../../App';
 import { colors, fonts, radius, spacing } from '../theme';
 import { APP_NAME } from '../constants';
 import { useStore } from '../state/store';
+import { usePurchasesStore } from '../state/purchases';
 import { listAlbums, type AlbumInfo } from '../media';
 import type { SortOrder } from '../db/settings';
+import { sumFreedBytesLifetime } from '../db/decisions';
+import { formatSize } from '../utils/format';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export default function SettingsScreen() {
   const nav = useNavigation<Nav>();
   const { state, updateSetting, resetHistory } = useStore();
+  const { isPro } = usePurchasesStore();
   const s = state.settings;
   const [albums, setAlbums] = useState<AlbumInfo[] | null>(null);
   const [showAlbums, setShowAlbums] = useState(false);
+
+  const openPaywall = useCallback(() => nav.navigate('Paywall', {}), [nav]);
+
+  const onToggleVideos = useCallback(
+    (v: boolean) => {
+      if (v && !isPro) {
+        openPaywall();
+        return;
+      }
+      void updateSetting('includeVideos', v);
+    },
+    [isPro, openPaywall, updateSetting],
+  );
+
+  const onSmartFilter = useCallback(() => {
+    if (!isPro) {
+      openPaywall();
+      return;
+    }
+    Alert.alert('Smart-Filter', 'Screenshots, grosse Dateien und Duplikate — kommt bald.');
+  }, [isPro, openPaywall]);
+
+  const onStats = useCallback(async () => {
+    if (!isPro) {
+      openPaywall();
+      return;
+    }
+    const freed = await sumFreedBytesLifetime();
+    Alert.alert('Freigegebener Speicher', `${formatSize(freed)} insgesamt freigegeben.`);
+  }, [isPro, openPaywall]);
 
   useEffect(() => {
     if (showAlbums && albums === null) {
@@ -53,11 +87,15 @@ export default function SettingsScreen() {
 
   const pickAlbum = useCallback(
     (album: AlbumInfo | null) => {
+      setShowAlbums(false);
+      if (album && !isPro) {
+        openPaywall();
+        return;
+      }
       void updateSetting('albumId', album ? album.id : null);
       void updateSetting('albumTitle', album ? album.title : null);
-      setShowAlbums(false);
     },
-    [updateSetting],
+    [isPro, openPaywall, updateSetting],
   );
 
   return (
@@ -73,6 +111,23 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
+        {/* Cull Pro */}
+        <Section label="CULL PRO">
+          {isPro ? (
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>{APP_NAME} Pro aktiv</Text>
+              <Feather name="check" size={18} color={colors.greenText} />
+            </View>
+          ) : (
+            <Pressable style={styles.row} onPress={openPaywall}>
+              <Text style={[styles.rowLabel, { color: colors.cream }]}>
+                {APP_NAME} Pro freischalten
+              </Text>
+              <Feather name="chevron-right" size={18} color={colors.cream40} />
+            </Pressable>
+          )}
+        </Section>
+
         {/* Sortierung */}
         <Section label="SORTIERUNG">
           <Segmented<SortOrder>
@@ -89,8 +144,9 @@ export default function SettingsScreen() {
         <Section label="DURCHGEHEN">
           <ToggleRow
             label="Videos einbeziehen"
+            hint={isPro ? undefined : 'Pro'}
             value={s.includeVideos}
-            onChange={(v) => void updateSetting('includeVideos', v)}
+            onChange={onToggleVideos}
           />
           <ToggleRow
             label="Favoriten überspringen"
@@ -143,6 +199,29 @@ export default function SettingsScreen() {
           )}
         </Section>
 
+        {/* Smart-Filter & Statistik (Pro) */}
+        <Section label="SMART">
+          <Pressable style={styles.row} onPress={onSmartFilter}>
+            <View style={styles.rowTextWrap}>
+              <Text style={styles.rowLabel}>Smart-Filter</Text>
+              <Text style={styles.rowHint}>Screenshots · grosse Dateien · Duplikate</Text>
+            </View>
+            {isPro ? (
+              <Feather name="chevron-right" size={18} color={colors.cream40} />
+            ) : (
+              <ProBadge />
+            )}
+          </Pressable>
+          <Pressable style={styles.row} onPress={onStats}>
+            <Text style={styles.rowLabel}>Freigegebener Speicher</Text>
+            {isPro ? (
+              <Feather name="chevron-right" size={18} color={colors.cream40} />
+            ) : (
+              <ProBadge />
+            )}
+          </Pressable>
+        </Section>
+
         {/* Verlauf */}
         <Section label="VERLAUF">
           <Pressable style={styles.row} onPress={confirmReset}>
@@ -161,6 +240,14 @@ export default function SettingsScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function ProBadge() {
+  return (
+    <View style={styles.proBadge}>
+      <Text style={styles.proBadgeText}>PRO</Text>
+    </View>
   );
 }
 
@@ -300,6 +387,14 @@ const styles = StyleSheet.create({
   rowTextWrap: { flex: 1, gap: 2 },
   rowLabel: { fontFamily: fonts.sans500, fontSize: 14, color: colors.cream },
   rowHint: { fontFamily: fonts.mono400, fontSize: 11, color: colors.cream40 },
+  proBadge: {
+    borderWidth: 1,
+    borderColor: colors.cream25,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  proBadgeText: { fontFamily: fonts.mono600, fontSize: 9, letterSpacing: 0.8, color: colors.cream40 },
 
   segmented: { flexDirection: 'row', padding: 5, gap: 5 },
   segment: {
