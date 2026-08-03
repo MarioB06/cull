@@ -43,11 +43,11 @@ const navTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: colors.screenBg,
-    card: colors.screenBg,
-    text: colors.cream,
-    border: colors.cream13,
-    primary: colors.cream,
+    background: colors.canvas,
+    card: colors.canvas,
+    text: colors.text,
+    border: colors.glassBorder,
+    primary: colors.text,
   },
 };
 
@@ -80,7 +80,7 @@ export default function App() {
     return (
       <View style={styles.loader}>
         <StatusBar style="light" />
-        <ActivityIndicator color={colors.cream} />
+        <ActivityIndicator color={colors.text} />
       </View>
     );
   }
@@ -96,7 +96,7 @@ export default function App() {
                 initialRouteName={onboardingDone ? 'Swipe' : 'Onboarding'}
                 screenOptions={{
                   headerShown: false,
-                  contentStyle: { backgroundColor: colors.screenBg },
+                  contentStyle: { backgroundColor: colors.canvas },
                   animation: 'slide_from_bottom',
                 }}
               >
@@ -131,10 +131,10 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.pageBg },
+  root: { flex: 1, backgroundColor: colors.canvas },
   loader: {
     flex: 1,
-    backgroundColor: colors.screenBg,
+    backgroundColor: colors.canvas,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -1,111 +1,65 @@
-// Zentrales Design-System.
-
-/** Primärtext-Creme mit abgestufter Transparenz. */
-export const cream = (alpha: number = 1): string => `rgba(236,227,212,${alpha})`;
-
-/** Rot (Löschen) mit Transparenz. */
-export const red = (alpha: number = 1): string => `rgba(194,84,63,${alpha})`;
-
-/** Grün (Behalten) mit Transparenz. */
-export const green = (alpha: number = 1): string => `rgba(127,160,111,${alpha})`;
-
-/** Marken-Akzent (warmes Gold) mit Transparenz. */
-export const accent = (alpha: number = 1): string => `rgba(240,168,64,${alpha})`;
+// Zentrales Design-System — Glas-Look. Foto/Ambiente zuunterst, Bedienelemente als Milchglas.
 
 export const colors = {
-  pageBg: '#0b0907',
-  screenBg: '#15110d',
-  // Verlaufs-Stops für den Bildschirm-Hintergrund (mehr Tiefe statt Flachfarbe).
-  bgGradientTop: '#231910',
-  bgGradientBottom: '#0d0a07',
+  canvas: '#0e0b09', // tiefes warmes Near-Black als Grundfläche
 
-  cream: '#ece3d4',
-  // Häufig genutzte Creme-Abstufungen.
-  creamHi: cream(0.85),
-  cream70: cream(0.7),
-  cream55: cream(0.55),
-  cream40: cream(0.4),
-  cream38: cream(0.38),
-  cream30: cream(0.3),
-  cream25: cream(0.25),
-  cream13: cream(0.13),
+  // Glas — neutral (Standard-Bedienelement)
+  glass: 'rgba(255,255,255,0.12)',
+  glassStrong: 'rgba(255,255,255,0.16)',
+  glassBorder: 'rgba(255,255,255,0.22)',
+  glassBorderStrong: 'rgba(255,255,255,0.30)',
 
-  // Marken-Akzent (warmes Gold) — primäre CTAs, aktive Zustände, Highlights, Badges.
-  accent: '#f0a840',
-  accentBright: '#ffc266',
-  accentDeep: '#c9821f',
-  accentBg: accent(0.14),
-  accentBorder: accent(0.4),
-  // Buttontext auf Akzent-Fill.
-  onAccent: '#241505',
+  // Glas — Terracotta (Löschen / Warnung / Primär-Glas)
+  deleteGlass: 'rgba(194,84,63,0.34)',
+  deleteGlassBorder: 'rgba(226,120,95,0.60)',
+  deleteText: '#ffe2d9',
 
-  // Löschen / Rot.
-  redBorder: '#c2543f',
-  redFill: '#c2543f',
-  redText: '#d9745f',
-  redBright: '#cf5a44',
-  redFillBg: red(0.13),
-  redBorder40: red(0.4),
+  // Glas — Salbei (Behalten / Positiv)
+  keepGlass: 'rgba(127,160,111,0.36)',
+  keepGlassBorder: 'rgba(147,179,132,0.60)',
+  keepText: '#e9f2e0',
 
-  // Behalten / Grün.
-  greenBorder: '#7fa06f',
-  greenFill: '#7fa06f',
-  greenText: '#93b384',
-  greenFillBg: green(0.14),
+  // Solider Akzent (sehr sparsam, z. B. Paywall-CTA)
+  accent: '#c2543f',
+  onAccent: '#ffffff',
+  check: '#a9c298', // Häkchen-Grün auf Glas
 
-  // Buttontext auf rotem Fill.
-  onRed: '#fbeee9',
+  // Text
+  text: '#f5efe4', // Creme, primär
+  textDim: 'rgba(245,239,228,0.70)',
+  textFaint: 'rgba(245,239,228,0.50)',
+  white: '#ffffff',
+
+  // dunkle Chip-Fläche auf hellen Fotos (z. B. Metadaten)
+  scrimChip: 'rgba(0,0,0,0.32)',
+  scrimChipBorder: 'rgba(255,255,255,0.16)',
 } as const;
 
-// Schriftfamilien (Keys aus useFonts in App.tsx).
-export const fonts = {
-  // Archivo: Titel, Body, Buttontext.
-  sans400: 'Archivo_400Regular',
-  sans500: 'Archivo_500Medium',
-  sans600: 'Archivo_600SemiBold',
-  sans700: 'Archivo_700Bold',
-  // IBM Plex Mono: Zahlen, Metadaten, Labels, Stamps.
-  mono400: 'IBMPlexMono_400Regular',
-  mono500: 'IBMPlexMono_500Medium',
-  mono600: 'IBMPlexMono_600SemiBold',
+export const radius = { chip: 11, panel: 16, card: 30, circle: 999 } as const;
+
+export const blur = { light: 30, panel: 40, heavy: 60 } as const; // expo-blur intensity 0–100
+
+export const shadowCard = {
+  shadowColor: '#000',
+  shadowOpacity: 0.55,
+  shadowRadius: 22,
+  shadowOffset: { width: 0, height: 22 },
+  elevation: 20,
 } as const;
 
-// Grosszügigere Radien für eine weichere, freundlichere Anmutung.
-export const radius = {
-  card: 20,
-  thumb: 12,
-  button: 18,
-  chip: 10,
-  pill: 999,
+// Fonts (Keys aus useFonts in App.tsx).
+export const font = {
+  sans: 'Archivo_400Regular',
+  sansMed: 'Archivo_500Medium',
+  sansSemi: 'Archivo_600SemiBold',
+  sansBold: 'Archivo_700Bold',
+  mono: 'IBMPlexMono_400Regular',
+  monoMed: 'IBMPlexMono_500Medium',
+  monoSemi: 'IBMPlexMono_600SemiBold',
 } as const;
 
-export const spacing = {
-  screenH: 20,
-} as const;
+// Warmer Ambiente-Verlauf für Screens ohne Foto (Onboarding, Paywall).
+export const ambientGradient = ['#a8734a', '#6e4227', '#2a1710', '#0e0b09'] as const;
+export const ambientLocations = [0, 0.38, 0.7, 1] as const;
 
-// Weiche Tiefe statt harter Kanten. shadowColor/-Opacity/-Radius für iOS,
-// elevation für Android (RN mappt das nicht automatisch zwischen Plattformen).
-export const shadow = {
-  card: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
-    shadowRadius: 24,
-    elevation: 10,
-  },
-  raised: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
-    elevation: 6,
-  },
-  /** Farbiges Glühen unter Akzent-/Semantik-Buttons (z.B. shadow.glow(colors.accent)). */
-  glow: (color: string) => ({
-    shadowColor: color,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
-  }),
-} as const;
+export const spacing = { screenH: 20 } as const;
