@@ -16,8 +16,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../../App';
-import { colors, fonts, radius, shadow, spacing } from '../theme';
+import { colors, font, spacing, blur } from '../theme';
 import Screen from '../components/Screen';
+import { Glass } from '../components/Glass';
 import { DRY_RUN } from '../constants';
 import { useStore } from '../state/store';
 import { usePurchasesStore } from '../state/purchases';
@@ -104,16 +105,18 @@ export default function QueueScreen() {
   const count = rows.length;
 
   return (
-    <Screen>
+    <Screen glow>
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => nav.goBack()} hitSlop={10} style={styles.backBtn}>
-          <Feather name="chevron-left" size={22} color={colors.cream} />
+        <Pressable onPress={() => nav.goBack()} hitSlop={10}>
+          <Glass style={styles.backBtn}>
+            <Feather name="chevron-left" size={22} color={colors.text} />
+          </Glass>
         </Pressable>
         <View style={styles.headerText}>
           <Text style={styles.title}>Lösch-Queue</Text>
           <Text style={styles.subtitle}>
-            {count} MARKIERT · ANTIPPEN ZUM ABWÄHLEN
+            {count} markiert · antippen zum abwählen
           </Text>
         </View>
         <View style={styles.headerSpacer} />
@@ -122,7 +125,7 @@ export default function QueueScreen() {
       {/* Inhalt */}
       {!loaded ? (
         <View style={styles.center}>
-          <ActivityIndicator color={colors.cream40} />
+          <ActivityIndicator color={colors.textFaint} />
         </View>
       ) : count === 0 ? (
         <View style={styles.center}>
@@ -143,29 +146,33 @@ export default function QueueScreen() {
         />
       )}
 
-      {/* Sticky Delete-Button */}
+      {/* Sticky Delete-Leiste */}
       {count > 0 && (
         <View style={styles.stickyWrap} pointerEvents="box-none">
           <LinearGradient
-            colors={['transparent', colors.screenBg]}
+            colors={['transparent', colors.canvas]}
             locations={[0, 0.5]}
             style={styles.stickyGradient}
             pointerEvents="none"
           />
           <View style={styles.stickyInner}>
-            <Pressable
-              style={({ pressed }) => [styles.deleteBtn, pressed && styles.deleteBtnPressed]}
-              onPress={onCommit}
-              disabled={deleting}
-            >
-              {deleting ? (
-                <ActivityIndicator color={colors.onRed} />
-              ) : (
-                <>
-                  <Feather name="trash-2" size={18} color={colors.onRed} />
-                  <Text style={styles.deleteText}>Endgültig löschen</Text>
-                  <Text style={styles.deleteCount}>({count})</Text>
-                </>
+            <Pressable onPress={onCommit} disabled={deleting}>
+              {({ pressed }) => (
+                <Glass
+                  tint={colors.deleteGlass}
+                  border={colors.deleteGlassBorder}
+                  style={[styles.deleteBtn, pressed && styles.deleteBtnPressed]}
+                >
+                  {deleting ? (
+                    <ActivityIndicator color={colors.deleteText} />
+                  ) : (
+                    <>
+                      <Feather name="trash-2" size={18} color={colors.deleteText} />
+                      <Text style={styles.deleteText}>Endgültig löschen</Text>
+                      <Text style={styles.deleteCount}>({count})</Text>
+                    </>
+                  )}
+                </Glass>
               )}
             </Pressable>
             <Text style={styles.freedText}>
@@ -211,13 +218,19 @@ function QueueItem({
         <Image source={{ uri }} style={styles.thumb} contentFit="cover" transition={100} />
       ) : (
         <View style={[styles.thumb, styles.thumbPlaceholder]}>
-          {!resolved && <ActivityIndicator size="small" color={colors.cream30} />}
+          {!resolved && <ActivityIndicator size="small" color={colors.textFaint} />}
         </View>
       )}
       <View style={styles.thumbOverlay} pointerEvents="none" />
-      <View style={styles.xBadge} pointerEvents="none">
-        <Feather name="x" size={13} color={colors.cream} />
-      </View>
+      <Glass
+        tint={colors.scrimChip}
+        border={colors.scrimChipBorder}
+        radius={11}
+        intensity={blur.light}
+        style={styles.xBadge}
+      >
+        <Feather name="x" size={12} color={colors.text} />
+      </Glass>
       <Text style={styles.frameId} numberOfLines={1} pointerEvents="none">
         {frameId}
       </Text>
@@ -233,36 +246,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.screenH,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.cream13,
     gap: 12,
   },
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.cream25,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerSpacer: { width: 40 },
   headerText: { flex: 1, alignItems: 'center' },
-  title: { fontFamily: fonts.sans600, fontSize: 16, color: colors.cream },
+  title: { fontFamily: font.sansMed, fontSize: 16, color: colors.text },
   subtitle: {
-    fontFamily: fonts.mono400,
+    fontFamily: font.mono,
     fontSize: 10,
-    letterSpacing: 0.8,
-    color: colors.cream40,
+    letterSpacing: 0.4,
+    color: colors.textFaint,
     marginTop: 3,
   },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, padding: 32 },
-  emptyBig: { fontFamily: fonts.mono500, fontSize: 16, letterSpacing: 2, color: colors.cream30 },
-  emptySub: { fontFamily: fonts.sans400, fontSize: 13, color: colors.cream55 },
+  emptyBig: { fontFamily: font.monoMed, fontSize: 16, letterSpacing: 2, color: colors.textFaint },
+  emptySub: { fontFamily: font.sans, fontSize: 13, color: colors.textDim },
 
   grid: { padding: spacing.screenH, paddingBottom: 140 },
   gridRow: { gap: GAP, marginBottom: GAP },
-  item: { flex: 1, aspectRatio: 1, borderRadius: radius.thumb, overflow: 'hidden' },
+  item: {
+    flex: 1,
+    aspectRatio: 1,
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.1)',
+    overflow: 'hidden',
+  },
   thumb: { width: '100%', height: '100%', backgroundColor: '#0a0805' },
   thumbPlaceholder: { alignItems: 'center', justifyContent: 'center' },
   thumbOverlay: {
@@ -271,7 +287,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(11,9,7,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.22)',
   },
   xBadge: {
     position: 'absolute',
@@ -279,10 +295,6 @@ const styles = StyleSheet.create({
     right: 6,
     width: 22,
     height: 22,
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: colors.redBorder40,
-    backgroundColor: 'rgba(194,84,63,0.55)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -291,9 +303,9 @@ const styles = StyleSheet.create({
     bottom: 5,
     left: 6,
     right: 6,
-    fontFamily: fonts.mono400,
+    fontFamily: font.mono,
     fontSize: 8,
-    color: colors.cream70,
+    color: colors.textDim,
   },
 
   stickyWrap: { position: 'absolute', left: 0, right: 0, bottom: 0 },
@@ -305,17 +317,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 9,
     height: 56,
-    borderRadius: radius.button,
-    backgroundColor: colors.redFill,
-    ...shadow.glow(colors.redBright),
   },
   deleteBtnPressed: { opacity: 0.85 },
-  deleteText: { fontFamily: fonts.sans600, fontSize: 16, color: colors.onRed },
-  deleteCount: { fontFamily: fonts.mono500, fontSize: 14, color: colors.onRed },
+  deleteText: { fontFamily: font.sansSemi, fontSize: 16, color: colors.deleteText },
+  deleteCount: { fontFamily: font.monoMed, fontSize: 14, color: colors.deleteText },
   freedText: {
-    fontFamily: fonts.mono400,
+    fontFamily: font.mono,
     fontSize: 11,
-    color: colors.cream40,
+    color: colors.textFaint,
     textAlign: 'center',
   },
 });
