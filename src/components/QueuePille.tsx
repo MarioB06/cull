@@ -1,8 +1,8 @@
 import React from 'react';
-import { Text, StyleSheet, Pressable } from 'react-native';
+import { Text, StyleSheet, Pressable, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-import { colors, fonts } from '../theme';
+import { colors, fonts, radius, shadow } from '../theme';
 
 interface Props {
   count: number;
@@ -17,7 +17,8 @@ export default function QueuePille({ count, onPress }: Props) {
       onPress={onPress}
       hitSlop={8}
     >
-      <Feather name="trash-2" size={13} color={colors.redText} />
+      <View style={styles.dot} />
+      <Feather name="trash-2" size={12} color={colors.redText} />
       <Text style={styles.text}>{count} zum Löschen</Text>
     </Pressable>
   );
@@ -27,14 +28,16 @@ const styles = StyleSheet.create({
   pille: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 6,
     borderWidth: 1,
     borderColor: colors.redBorder40,
     backgroundColor: colors.redFillBg,
-    borderRadius: 999,
+    borderRadius: radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 7,
+    ...shadow.glow(colors.redBright),
   },
   pressed: { opacity: 0.7 },
+  dot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.redBright },
   text: { fontFamily: fonts.mono500, fontSize: 12, color: colors.redText },
 });

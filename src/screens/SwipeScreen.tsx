@@ -8,18 +8,18 @@ import {
   Pressable,
   type AppStateStatus,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../../App';
-import { colors, fonts, spacing } from '../theme';
+import { colors, fonts, radius, shadow, spacing } from '../theme';
 import { APP_NAME, PREFETCH_COUNT } from '../constants';
 import { useStore } from '../state/store';
 import { setHapticsEnabled, hapticCommit, hapticSelection } from '../utils/haptics';
 import { getCoachShown, setCoachShown } from '../db/flags';
+import Screen from '../components/Screen';
 import CardStack, { type CardStackHandle } from '../components/CardStack';
 import Controls from '../components/Controls';
 import QueuePille from '../components/QueuePille';
@@ -115,7 +115,7 @@ export default function SwipeScreen() {
 
   return (
     <PermissionGate>
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <Screen>
         <LimitedBanner />
         <Content
           store={store}
@@ -127,7 +127,7 @@ export default function SwipeScreen() {
           openSettings={openSettings}
           showCoach={showCoach}
         />
-      </SafeAreaView>
+      </Screen>
     </PermissionGate>
   );
 }
@@ -225,8 +225,12 @@ function Content({ store, cardRef, onKeep, onDelete, onUndo, openQueue, openSett
         </View>
         <View style={styles.headerRight}>
           {queueCount > 0 && <QueuePille count={queueCount} onPress={openQueue} />}
-          <Pressable onPress={openSettings} hitSlop={10} style={styles.gear}>
-            <Feather name="sliders" size={18} color={colors.cream40} />
+          <Pressable
+            onPress={openSettings}
+            hitSlop={10}
+            style={({ pressed }) => [styles.gear, pressed && styles.gearPressed]}
+          >
+            <Feather name="sliders" size={17} color={colors.cream70} />
           </Pressable>
         </View>
       </View>
@@ -265,7 +269,6 @@ function Content({ store, cardRef, onKeep, onDelete, onUndo, openQueue, openSett
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.screenBg },
   flex: { flex: 1 },
   center: {
     flex: 1,
@@ -301,9 +304,10 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 12,
     backgroundColor: colors.redFill,
-    paddingVertical: 13,
-    paddingHorizontal: 22,
-    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: radius.button,
+    ...shadow.glow(colors.redBright),
   },
   ctaPressed: { opacity: 0.85 },
   ctaText: { fontFamily: fonts.sans600, fontSize: 15, color: colors.onRed },
@@ -321,14 +325,14 @@ const styles = StyleSheet.create({
   counterDone: { fontFamily: fonts.mono500, fontSize: 15, color: colors.cream },
   counterTotal: { fontFamily: fonts.mono400, fontSize: 15, color: colors.cream38 },
   progressTrack: {
-    height: 2,
+    height: 3,
     backgroundColor: colors.cream13,
-    borderRadius: 1,
+    borderRadius: 2,
     marginTop: 8,
     overflow: 'hidden',
     maxWidth: 180,
   },
-  progressFill: { height: 2, backgroundColor: colors.cream70 },
+  progressFill: { height: 3, backgroundColor: colors.accent, borderRadius: 2 },
   progressLabel: {
     fontFamily: fonts.mono400,
     fontSize: 9,
@@ -337,7 +341,17 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 2 },
-  gear: { padding: 4 },
+  gear: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: colors.cream13,
+    backgroundColor: 'rgba(236,227,212,0.04)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gearPressed: { opacity: 0.7 },
 
   stackArea: {
     flex: 1,

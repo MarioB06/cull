@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import PhotoCard from './PhotoCard';
 import type { Asset, AssetDetails } from '../media';
-import { radius } from '../theme';
+import { radius, shadow } from '../theme';
 import { SWIPE_THRESHOLD, SWIPE_VELOCITY_THRESHOLD, ROTATION_DIVISOR } from '../constants';
 
 export interface CardStackHandle {
@@ -142,6 +142,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderRadius: radius.card,
+    ...shadow.card,
   },
   overlay: {
     position: 'absolute',

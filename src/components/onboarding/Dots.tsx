@@ -21,5 +21,5 @@ export default function Dots({ count, active }: Props) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center' },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.cream13 },
-  dotActive: { width: 18, backgroundColor: colors.cream },
+  dotActive: { width: 18, backgroundColor: colors.accent },
 });

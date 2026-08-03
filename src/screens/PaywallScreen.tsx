@@ -1,16 +1,17 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Alert, ActivityIndicator, Linking } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../../App';
-import { colors, fonts, radius, spacing } from '../theme';
+import { colors, fonts, radius, shadow, spacing } from '../theme';
 import { APP_NAME, TERMS_URL, PRIVACY_URL } from '../constants';
 import { usePurchasesStore } from '../state/purchases';
 import type { PackageId, PurchasesPackageInfo } from '../purchases/types';
 import { formatSize } from '../utils/format';
+import Screen from '../components/Screen';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type PaywallRoute = RouteProp<RootStackParamList, 'Paywall'>;
@@ -64,29 +65,36 @@ export default function PaywallScreen() {
 
   if (!ready) {
     return (
-      <SafeAreaView style={styles.container}>
+      <Screen>
         <View style={styles.center}>
           <ActivityIndicator color={colors.cream} />
         </View>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   if (isPro) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <Screen>
         <CloseHeader onClose={close} />
         <View style={styles.center}>
-          <Feather name="check-circle" size={36} color={colors.greenText} />
+          <View style={styles.successIcon}>
+            <Feather name="check" size={28} color={colors.greenText} />
+          </View>
           <Text style={styles.headline}>{APP_NAME} Pro ist aktiv</Text>
           <Text style={styles.body}>Alle Pro-Funktionen sind bereits freigeschaltet.</Text>
         </View>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <Screen>
+      <LinearGradient
+        colors={[colors.accentBg, 'transparent']}
+        style={styles.glow}
+        pointerEvents="none"
+      />
       <CloseHeader onClose={close} />
       <ScrollView contentContainerStyle={styles.scroll}>
         {isMock && (
@@ -111,7 +119,9 @@ export default function PaywallScreen() {
         <View style={styles.features}>
           {FEATURES.map((f) => (
             <View key={f} style={styles.featureRow}>
-              <Feather name="check" size={15} color={colors.greenText} />
+              <View style={styles.featureCheck}>
+                <Feather name="check" size={12} color={colors.accent} />
+              </View>
               <Text style={styles.featureText}>{f}</Text>
             </View>
           ))}
@@ -157,7 +167,7 @@ export default function PaywallScreen() {
           disabled={!offering || purchasing || restoring}
         >
           {purchasing ? (
-            <ActivityIndicator color={colors.screenBg} />
+            <ActivityIndicator color={colors.onAccent} />
           ) : (
             <Text style={styles.ctaText}>{APP_NAME} Pro holen</Text>
           )}
@@ -183,7 +193,7 @@ export default function PaywallScreen() {
           </Pressable>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -214,7 +224,7 @@ function PackageCard({
 }) {
   return (
     <Pressable
-      style={[styles.card, selected && styles.cardSelected]}
+      style={[styles.card, recommended && styles.cardRecommended, selected && styles.cardSelected]}
       onPress={onPress}
     >
       {recommended && (
@@ -230,15 +240,22 @@ function PackageCard({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.screenBg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, padding: 32 },
+  glow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 340,
+  },
   header: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: spacing.screenH, paddingTop: 8 },
   closeBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: colors.cream25,
+    borderColor: colors.cream13,
+    backgroundColor: 'rgba(236,227,212,0.05)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -250,22 +267,41 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.redBorder40,
     backgroundColor: colors.redFillBg,
-    borderRadius: 999,
+    borderRadius: radius.pill,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   mockBadgeText: { fontFamily: fonts.mono500, fontSize: 10, letterSpacing: 1, color: colors.redText },
 
   hero: { alignItems: 'center', gap: 4, marginTop: 4 },
-  heroNumber: { fontFamily: fonts.mono600, fontSize: 30, color: colors.cream, textAlign: 'center' },
+  heroNumber: { fontFamily: fonts.mono600, fontSize: 32, color: colors.accentBright, textAlign: 'center' },
   heroSub: { fontFamily: fonts.sans500, fontSize: 16, color: colors.creamHi, textAlign: 'center' },
   heroTitle: { fontFamily: fonts.sans600, fontSize: 26, color: colors.cream, textAlign: 'center' },
 
+  successIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: colors.greenFillBg,
+    backgroundColor: colors.greenFillBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
   headline: { fontFamily: fonts.sans500, fontSize: 19, color: colors.cream, textAlign: 'center' },
   body: { fontFamily: fonts.sans400, fontSize: 14, color: colors.cream55, textAlign: 'center' },
 
-  features: { gap: 11 },
+  features: { gap: 12 },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  featureCheck: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.accentBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   featureText: { fontFamily: fonts.sans400, fontSize: 14, color: colors.creamHi, flex: 1 },
 
   cards: { flexDirection: 'row', gap: 12 },
@@ -277,17 +313,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(236,227,212,0.04)',
     padding: 16,
     gap: 4,
+    ...shadow.raised,
   },
-  cardSelected: { borderWidth: 2, borderColor: colors.cream },
+  cardRecommended: { borderColor: colors.accentBorder },
+  cardSelected: { borderWidth: 2, borderColor: colors.accent, ...shadow.glow(colors.accent) },
   badge: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.cream,
-    borderRadius: 999,
+    backgroundColor: colors.accent,
+    borderRadius: radius.pill,
     paddingHorizontal: 8,
     paddingVertical: 2,
     marginBottom: 6,
   },
-  badgeText: { fontFamily: fonts.mono600, fontSize: 9, letterSpacing: 0.8, color: colors.screenBg },
+  badgeText: { fontFamily: fonts.mono600, fontSize: 9, letterSpacing: 0.8, color: colors.onAccent },
   cardLabel: { fontFamily: fonts.sans600, fontSize: 15, color: colors.cream },
   cardPrice: { fontFamily: fonts.mono500, fontSize: 18, color: colors.cream, marginTop: 4 },
   cardSub: { fontFamily: fonts.mono400, fontSize: 11, color: colors.cream40 },
@@ -303,15 +341,16 @@ const styles = StyleSheet.create({
   hint: { fontFamily: fonts.mono400, fontSize: 11, color: colors.cream40, textAlign: 'center', marginTop: -8 },
 
   cta: {
-    backgroundColor: colors.cream,
+    backgroundColor: colors.accent,
     borderRadius: radius.button,
-    paddingVertical: 16,
+    paddingVertical: 17,
     alignItems: 'center',
     justifyContent: 'center',
+    ...shadow.glow(colors.accent),
   },
-  ctaPressed: { opacity: 0.85 },
+  ctaPressed: { opacity: 0.88 },
   ctaDisabled: { opacity: 0.5 },
-  ctaText: { fontFamily: fonts.sans600, fontSize: 16, color: colors.screenBg },
+  ctaText: { fontFamily: fonts.sans600, fontSize: 16, color: colors.onAccent },
 
   restoreBtn: { alignItems: 'center', paddingVertical: 4 },
   restoreText: { fontFamily: fonts.mono500, fontSize: 12, color: colors.cream40 },

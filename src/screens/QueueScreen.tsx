@@ -8,7 +8,6 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -17,7 +16,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../../App';
-import { colors, fonts, radius, spacing } from '../theme';
+import { colors, fonts, radius, shadow, spacing } from '../theme';
+import Screen from '../components/Screen';
 import { DRY_RUN } from '../constants';
 import { useStore } from '../state/store';
 import { usePurchasesStore } from '../state/purchases';
@@ -104,7 +104,7 @@ export default function QueueScreen() {
   const count = rows.length;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <Screen>
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => nav.goBack()} hitSlop={10} style={styles.backBtn}>
@@ -116,7 +116,7 @@ export default function QueueScreen() {
             {count} MARKIERT · ANTIPPEN ZUM ABWÄHLEN
           </Text>
         </View>
-        <View style={styles.backBtn} />
+        <View style={styles.headerSpacer} />
       </View>
 
       {/* Inhalt */}
@@ -174,7 +174,7 @@ export default function QueueScreen() {
           </View>
         </View>
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -228,7 +228,6 @@ function QueueItem({
 const GAP = 9;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.screenBg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -247,6 +246,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  headerSpacer: { width: 40 },
   headerText: { flex: 1, alignItems: 'center' },
   title: { fontFamily: fonts.sans600, fontSize: 16, color: colors.cream },
   subtitle: {
@@ -280,7 +280,9 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: 'rgba(11,9,7,0.6)',
+    borderWidth: 1,
+    borderColor: colors.redBorder40,
+    backgroundColor: 'rgba(194,84,63,0.55)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -305,6 +307,7 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: radius.button,
     backgroundColor: colors.redFill,
+    ...shadow.glow(colors.redBright),
   },
   deleteBtnPressed: { opacity: 0.85 },
   deleteText: { fontFamily: fonts.sans600, fontSize: 16, color: colors.onRed },

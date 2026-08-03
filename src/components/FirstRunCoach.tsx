@@ -1,16 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, fonts } from '../theme';
+import { BlurView } from 'expo-blur';
+import { colors, fonts, radius, shadow } from '../theme';
 
 /** Dezenter Einmal-Hinweis auf der allerersten Swipe-Karte. */
 export default function FirstRunCoach() {
   return (
     <View style={styles.wrap} pointerEvents="none">
-      <View style={styles.pill}>
+      <BlurView intensity={30} tint="dark" style={styles.pill}>
         <Text style={styles.textDelete}>← Löschen</Text>
         <Text style={styles.dot}>·</Text>
         <Text style={styles.textKeep}>Behalten →</Text>
-      </View>
+      </BlurView>
     </View>
   );
 }
@@ -29,12 +30,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(11,9,7,0.55)',
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.cream13,
-    borderRadius: 999,
+    borderRadius: radius.pill,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 11,
+    ...shadow.raised,
   },
   textDelete: { fontFamily: fonts.mono500, fontSize: 12, color: colors.redText },
   textKeep: { fontFamily: fonts.mono500, fontSize: 12, color: colors.greenText },

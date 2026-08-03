@@ -9,13 +9,12 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../../App';
-import { colors, fonts, radius, spacing } from '../theme';
+import { colors, fonts, radius, shadow, spacing } from '../theme';
 import { APP_NAME } from '../constants';
 import { useStore } from '../state/store';
 import { usePurchasesStore } from '../state/purchases';
@@ -23,6 +22,7 @@ import { listAlbums, type AlbumInfo } from '../media';
 import type { SortOrder } from '../db/settings';
 import { sumFreedBytesLifetime } from '../db/decisions';
 import { formatSize } from '../utils/format';
+import Screen from '../components/Screen';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -99,7 +99,7 @@ export default function SettingsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <Screen>
       <View style={styles.header}>
         <Pressable onPress={() => nav.goBack()} hitSlop={10} style={styles.backBtn}>
           <Feather name="chevron-left" size={22} color={colors.cream} />
@@ -107,26 +107,33 @@ export default function SettingsScreen() {
         <View style={styles.headerText}>
           <Text style={styles.title}>Einstellungen</Text>
         </View>
-        <View style={styles.backBtn} />
+        <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Cull Pro */}
-        <Section label="CULL PRO">
-          {isPro ? (
+        {isPro ? (
+          <Section label="CULL PRO">
             <View style={styles.row}>
               <Text style={styles.rowLabel}>{APP_NAME} Pro aktiv</Text>
               <Feather name="check" size={18} color={colors.greenText} />
             </View>
-          ) : (
-            <Pressable style={styles.row} onPress={openPaywall}>
-              <Text style={[styles.rowLabel, { color: colors.cream }]}>
-                {APP_NAME} Pro freischalten
-              </Text>
-              <Feather name="chevron-right" size={18} color={colors.cream40} />
-            </Pressable>
-          )}
-        </Section>
+          </Section>
+        ) : (
+          <Pressable
+            style={({ pressed }) => [styles.promoCard, pressed && styles.promoCardPressed]}
+            onPress={openPaywall}
+          >
+            <View style={styles.promoIcon}>
+              <Feather name="zap" size={18} color={colors.accent} />
+            </View>
+            <View style={styles.rowTextWrap}>
+              <Text style={styles.promoTitle}>{APP_NAME} Pro freischalten</Text>
+              <Text style={styles.promoHint}>Unbegrenzt löschen · Album-Filter · Videos · mehr</Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.accent} />
+          </Pressable>
+        )}
 
         {/* Sortierung */}
         <Section label="SORTIERUNG">
@@ -239,7 +246,7 @@ export default function SettingsScreen() {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -280,7 +287,7 @@ function ToggleRow({
       <Switch
         value={value}
         onValueChange={onChange}
-        trackColor={{ false: colors.cream13, true: colors.greenFill }}
+        trackColor={{ false: colors.cream13, true: colors.accent }}
         thumbColor={colors.cream}
         ios_backgroundColor={colors.cream13}
       />
@@ -332,13 +339,12 @@ function AlbumOption({
         {title}
         {count != null ? `  (${count})` : ''}
       </Text>
-      {selected && <Feather name="check" size={16} color={colors.greenText} />}
+      {selected && <Feather name="check" size={16} color={colors.accent} />}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.screenBg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -348,6 +354,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.cream13,
     gap: 12,
   },
+  headerSpacer: { width: 40 },
   backBtn: {
     width: 40,
     height: 40,
@@ -375,7 +382,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.cream13,
     overflow: 'hidden',
+    ...shadow.raised,
   },
+  promoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: radius.button,
+    borderWidth: 1,
+    borderColor: colors.accentBorder,
+    backgroundColor: colors.accentBg,
+    ...shadow.glow(colors.accent),
+  },
+  promoCardPressed: { opacity: 0.85 },
+  promoIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(240,168,64,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  promoTitle: { fontFamily: fonts.sans600, fontSize: 14, color: colors.cream },
+  promoHint: { fontFamily: fonts.mono400, fontSize: 11, color: colors.cream55, marginTop: 2 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -389,12 +419,13 @@ const styles = StyleSheet.create({
   rowHint: { fontFamily: fonts.mono400, fontSize: 11, color: colors.cream40 },
   proBadge: {
     borderWidth: 1,
-    borderColor: colors.cream25,
-    borderRadius: 999,
+    borderColor: colors.accentBorder,
+    backgroundColor: colors.accentBg,
+    borderRadius: radius.pill,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  proBadgeText: { fontFamily: fonts.mono600, fontSize: 9, letterSpacing: 0.8, color: colors.cream40 },
+  proBadgeText: { fontFamily: fonts.mono600, fontSize: 9, letterSpacing: 0.8, color: colors.accent },
 
   segmented: { flexDirection: 'row', padding: 5, gap: 5 },
   segment: {
@@ -404,9 +435,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'transparent',
   },
-  segmentActive: { backgroundColor: 'rgba(236,227,212,0.1)' },
+  segmentActive: { backgroundColor: colors.accentBg, borderWidth: 1, borderColor: colors.accentBorder },
   segmentText: { fontFamily: fonts.sans500, fontSize: 13, color: colors.cream40 },
-  segmentTextActive: { color: colors.cream },
+  segmentTextActive: { color: colors.accent },
 
   albumList: { borderTopWidth: 1, borderTopColor: colors.cream13, paddingVertical: 4 },
   albumOption: {

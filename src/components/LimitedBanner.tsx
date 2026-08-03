@@ -13,7 +13,7 @@ export default function LimitedBanner() {
 
   return (
     <View style={styles.banner}>
-      <Feather name="info" size={14} color={colors.cream70} />
+      <Feather name="info" size={14} color={colors.accent} />
       <Text style={styles.text}>Eingeschränkter Zugriff — nur ausgewählte Fotos sichtbar.</Text>
       <Pressable onPress={presentLimitedPicker} hitSlop={8}>
         <Text style={styles.action}>Mehr</Text>
@@ -27,12 +27,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    backgroundColor: 'rgba(236,227,212,0.06)',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.cream13,
+    marginHorizontal: 14,
+    marginTop: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+    backgroundColor: colors.accentBg,
+    borderWidth: 1,
+    borderColor: colors.accentBorder,
   },
   text: { flex: 1, fontFamily: fonts.mono400, fontSize: 11, color: colors.cream70 },
-  action: { fontFamily: fonts.mono600, fontSize: 11, color: colors.cream },
+  action: { fontFamily: fonts.mono600, fontSize: 11, color: colors.accent },
 });

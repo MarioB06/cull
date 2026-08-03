@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-import { colors } from '../theme';
+import { colors, shadow } from '../theme';
 
 interface Props {
   canUndo: boolean;
@@ -66,6 +66,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   big: { width: 66, height: 66, borderRadius: 33 },
-  delete: { borderColor: colors.redBorder, backgroundColor: colors.redFillBg },
-  keep: { borderColor: colors.greenBorder, backgroundColor: colors.greenFillBg },
+  delete: {
+    borderColor: colors.redBorder,
+    backgroundColor: colors.redFillBg,
+    ...shadow.glow(colors.redBright),
+  },
+  keep: {
+    borderColor: colors.greenBorder,
+    backgroundColor: colors.greenFillBg,
+    ...shadow.glow(colors.greenBorder),
+  },
 });

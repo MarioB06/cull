@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Linking, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 
-import { colors, fonts } from '../theme';
+import { colors, fonts, radius, shadow } from '../theme';
 import { APP_NAME } from '../constants';
 import { useStore } from '../state/store';
 import { presentLimitedPicker } from '../media';
+import Screen from './Screen';
 
 /**
  * Steuert den Zugriff: undetermined → Anfrage-CTA, denied → Einstellungen,
@@ -31,9 +31,11 @@ export default function PermissionGate({ children }: { children: React.ReactNode
 
   if (perm === 'undetermined') {
     return (
-      <SafeAreaView style={styles.container}>
+      <Screen>
         <View style={styles.body}>
-          <Feather name="image" size={40} color={colors.cream40} />
+          <View style={styles.iconCircle}>
+            <Feather name="image" size={26} color={colors.accent} />
+          </View>
           <Text style={styles.title}>{APP_NAME}</Text>
           <Text style={styles.text}>
             {APP_NAME} geht deine Foto-Galerie mit dir durch, damit du sie schnell ausmisten kannst.
@@ -46,15 +48,17 @@ export default function PermissionGate({ children }: { children: React.ReactNode
             <Text style={styles.btnText}>Foto-Zugriff erlauben</Text>
           </Pressable>
         </View>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   // denied
   return (
-    <SafeAreaView style={styles.container}>
+    <Screen>
       <View style={styles.body}>
-        <Feather name="lock" size={40} color={colors.cream40} />
+        <View style={styles.iconCircle}>
+          <Feather name="lock" size={26} color={colors.accent} />
+        </View>
         <Text style={styles.title}>Kein Foto-Zugriff</Text>
         <Text style={styles.text}>
           {APP_NAME} braucht Zugriff auf deine Fotos, um sie hier durchzugehen. Du kannst den
@@ -70,14 +74,24 @@ export default function PermissionGate({ children }: { children: React.ReactNode
           <Text style={styles.linkText}>Erneut anfragen</Text>
         </Pressable>
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.screenBg },
   center: { flex: 1, backgroundColor: colors.screenBg, alignItems: 'center', justifyContent: 'center' },
   body: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 18 },
+  iconCircle: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    borderWidth: 1,
+    borderColor: colors.accentBorder,
+    backgroundColor: colors.accentBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadow.glow(colors.accent),
+  },
   title: { fontFamily: fonts.sans600, fontSize: 22, color: colors.cream, marginTop: 6 },
   text: {
     fontFamily: fonts.sans400,
@@ -88,13 +102,14 @@ const styles = StyleSheet.create({
   },
   btn: {
     marginTop: 10,
-    backgroundColor: colors.cream,
-    paddingVertical: 14,
+    backgroundColor: colors.accent,
+    paddingVertical: 15,
     paddingHorizontal: 26,
-    borderRadius: 14,
+    borderRadius: radius.button,
+    ...shadow.glow(colors.accent),
   },
-  btnPressed: { opacity: 0.8 },
-  btnText: { fontFamily: fonts.sans600, fontSize: 15, color: colors.screenBg },
+  btnPressed: { opacity: 0.85 },
+  btnText: { fontFamily: fonts.sans600, fontSize: 15, color: colors.onAccent },
   linkBtn: { paddingVertical: 8 },
   linkText: { fontFamily: fonts.mono500, fontSize: 12, color: colors.cream40 },
 });

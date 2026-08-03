@@ -1,18 +1,18 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Linking, AppState, type AppStateStatus } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../../../App';
-import { colors, fonts, spacing } from '../../theme';
+import { colors, fonts, radius, shadow, spacing } from '../../theme';
 import { APP_NAME } from '../../constants';
 import { useStore } from '../../state/store';
 import { checkPermission } from '../../media';
 import { setOnboardingCompleted } from '../../db/flags';
 import Dots from '../../components/onboarding/Dots';
+import Screen from '../../components/Screen';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Step = 0 | 1 | 2 | 'recovery';
@@ -59,7 +59,7 @@ export default function OnboardingScreen() {
   }, [step, finish]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <Screen>
       <StatusBar style="light" />
       {step === 0 && <WelcomeStep onNext={() => setStep(1)} />}
       {step === 1 && <HowItWorksStep onNext={() => setStep(2)} />}
@@ -67,7 +67,7 @@ export default function OnboardingScreen() {
         <PermissionStep onRequest={requestAccess} requesting={requesting} />
       )}
       {step === 'recovery' && <RecoveryStep />}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -106,14 +106,18 @@ function HowItWorksStep({ onNext }: { onNext: () => void }) {
       <View style={styles.center}>
         <View style={styles.vizRow}>
           <View style={styles.vizSide}>
-            <Feather name="arrow-left" size={26} color={colors.redText} />
+            <View style={[styles.vizArrow, { borderColor: colors.redBorder40, backgroundColor: colors.redFillBg }]}>
+              <Feather name="arrow-left" size={20} color={colors.redText} />
+            </View>
             <Text style={[styles.vizLabel, { color: colors.redText }]}>LÖSCHEN</Text>
           </View>
           <View style={styles.vizCard}>
             <Feather name="image" size={26} color={colors.cream30} />
           </View>
           <View style={styles.vizSide}>
-            <Feather name="arrow-right" size={26} color={colors.greenText} />
+            <View style={[styles.vizArrow, { borderColor: colors.greenFillBg, backgroundColor: colors.greenFillBg }]}>
+              <Feather name="arrow-right" size={20} color={colors.greenText} />
+            </View>
             <Text style={[styles.vizLabel, { color: colors.greenText }]}>BEHALTEN</Text>
           </View>
         </View>
@@ -146,7 +150,7 @@ function PermissionStep({
     <View style={styles.step}>
       <View style={styles.center}>
         <View style={styles.iconCircle}>
-          <Feather name="lock" size={26} color={colors.cream} />
+          <Feather name="lock" size={24} color={colors.accent} />
         </View>
         <Text style={styles.headline}>Bleibt auf deinem Gerät.</Text>
         <Text style={styles.body}>
@@ -174,7 +178,7 @@ function RecoveryStep() {
     <View style={styles.step}>
       <View style={styles.center}>
         <View style={styles.iconCircle}>
-          <Feather name="alert-circle" size={26} color={colors.cream} />
+          <Feather name="alert-circle" size={24} color={colors.accent} />
         </View>
         <Text style={styles.headline}>Kein Foto-Zugriff</Text>
         <Text style={styles.body}>Ohne Fotozugriff kann {APP_NAME} nichts anzeigen.</Text>
@@ -192,23 +196,23 @@ function RecoveryStep() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.screenBg },
   step: { flex: 1, paddingHorizontal: spacing.screenH, justifyContent: 'space-between' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 12 },
   bottom: { paddingBottom: 18, gap: 18 },
 
   mark: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
+    width: 68,
+    height: 68,
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: colors.cream25,
-    backgroundColor: 'rgba(236,227,212,0.05)',
+    borderColor: colors.accentBorder,
+    backgroundColor: colors.accentBg,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
+    ...shadow.glow(colors.accent),
   },
-  markText: { fontFamily: fonts.mono600, fontSize: 30, color: colors.cream },
+  markText: { fontFamily: fonts.mono600, fontSize: 30, color: colors.accentBright },
   wordmark: { fontFamily: fonts.mono500, fontSize: 20, letterSpacing: 1, color: colors.cream },
   subline: {
     fontFamily: fonts.sans400,
@@ -220,15 +224,16 @@ const styles = StyleSheet.create({
   },
 
   iconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
     borderWidth: 1,
-    borderColor: colors.cream25,
-    backgroundColor: 'rgba(236,227,212,0.05)',
+    borderColor: colors.accentBorder,
+    backgroundColor: colors.accentBg,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
+    ...shadow.glow(colors.accent),
   },
 
   headline: {
@@ -252,35 +257,45 @@ const styles = StyleSheet.create({
     gap: 22,
     marginBottom: 8,
   },
-  vizSide: { alignItems: 'center', gap: 6, width: 64 },
+  vizSide: { alignItems: 'center', gap: 8, width: 64 },
+  vizArrow: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   vizLabel: { fontFamily: fonts.mono500, fontSize: 10, letterSpacing: 1.2 },
   vizCard: {
     width: 92,
     height: 128,
-    borderRadius: 12,
+    borderRadius: radius.card,
     borderWidth: 1,
     borderColor: colors.cream13,
     backgroundColor: 'rgba(236,227,212,0.04)',
     alignItems: 'center',
     justifyContent: 'center',
+    ...shadow.raised,
   },
 
   ctaFill: {
-    backgroundColor: colors.cream,
-    paddingVertical: 16,
-    borderRadius: 14,
+    backgroundColor: colors.accent,
+    paddingVertical: 17,
+    borderRadius: radius.button,
     alignItems: 'center',
+    ...shadow.glow(colors.accent),
   },
-  ctaFillText: { fontFamily: fonts.sans600, fontSize: 16, color: colors.screenBg },
+  ctaFillText: { fontFamily: fonts.sans600, fontSize: 16, color: colors.onAccent },
   ctaOutline: {
     borderWidth: 1.5,
     borderColor: colors.cream25,
-    paddingVertical: 16,
-    borderRadius: 14,
+    paddingVertical: 17,
+    borderRadius: radius.button,
     alignItems: 'center',
   },
   ctaOutlineText: { fontFamily: fonts.sans600, fontSize: 16, color: colors.cream },
-  pressed: { opacity: 0.8 },
+  pressed: { opacity: 0.85 },
   disabled: { opacity: 0.6 },
   footnote: {
     fontFamily: fonts.mono400,
