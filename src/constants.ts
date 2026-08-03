@@ -23,3 +23,16 @@ export const UNDO_STACK_SIZE = 5;
 
 // Chunk-Größe für deleteAssetsAsync bei sehr großen Queues.
 export const DELETE_CHUNK_SIZE = 200;
+
+// --- Monetarisierung ---
+
+// RevenueCat-Entitlement-Name (siehe SETUP.md).
+export const ENTITLEMENT_ID = 'pro';
+
+// Lebenslange kostenlose Löschungen (aus decisions zählbar), bevor Cull Pro nötig ist.
+export const FREE_DELETE_LIMIT = 200;
+
+// RevenueCat-API-Keys — siehe SETUP.md. Solange leer, bleibt die Real-Implementierung
+// inaktiv und die App nutzt automatisch den Mock (auch in einem Dev-Build).
+export const REVENUECAT_API_KEY_IOS = '';
+export const REVENUECAT_API_KEY_ANDROID = '';

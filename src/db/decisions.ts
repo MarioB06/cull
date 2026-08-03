@@ -91,6 +91,24 @@ export async function markDeleted(assetIds: string[]): Promise<void> {
   });
 }
 
+/** Lebenslange Anzahl endgültig gelöschter Fotos (für das Free-Limit). */
+export async function countDeletedLifetime(): Promise<number> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ c: number }>(
+    `SELECT COUNT(*) AS c FROM decisions WHERE decision = 'deleted'`,
+  );
+  return row?.c ?? 0;
+}
+
+/** Summe der freigegebenen Bytes über alle jemals gelöschten Fotos (für die Statistik). */
+export async function sumFreedBytesLifetime(): Promise<number> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ s: number | null }>(
+    `SELECT SUM(file_size) AS s FROM decisions WHERE decision = 'deleted' AND file_size IS NOT NULL`,
+  );
+  return row?.s ?? 0;
+}
+
 /** Alle Entscheidungen löschen (Verlauf zurücksetzen). */
 export async function resetAllDecisions(): Promise<void> {
   const db = await getDb();
