@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image as RNImage, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import Animated, { useAnimatedStyle, interpolate, Extrapolation, type SharedValue } from 'react-native-reanimated';
-import { colors, fonts, radius } from '../theme';
+import { Glass } from './Glass';
+import { colors, font, radius, blur, shadowCard } from '../theme';
 import { STAMP_FULL_AT } from '../constants';
 import type { Asset, AssetDetails } from '../media';
 import { formatDate, formatSize, fileNameFromUri } from '../utils/format';
@@ -38,7 +38,7 @@ function PhotoCardBase({ asset, details, translateX }: Props) {
 
       {!loaded && (
         <View style={styles.imgLoader}>
-          <ActivityIndicator color={colors.cream40} />
+          <ActivityIndicator color={colors.textFaint} />
         </View>
       )}
 
@@ -47,17 +47,19 @@ function PhotoCardBase({ asset, details, translateX }: Props) {
 
       {/* Verlauf unten für Lesbarkeit der Chips. */}
       <LinearGradient
-        colors={['transparent', 'rgba(11,9,7,0.6)']}
+        colors={['transparent', 'rgba(0,0,0,0.6)']}
         locations={[0.55, 1]}
         style={styles.gradient}
         pointerEvents="none"
       />
 
-      {/* Frame-Nummer = Dateiname, oben links. */}
+      {/* Frame-Nummer = Dateiname, oben links, als dunkler Glas-Chip. */}
       <View style={styles.frameWrap} pointerEvents="none">
-        <Text style={styles.frame} numberOfLines={1}>
-          {filename}
-        </Text>
+        <Glass tint={colors.scrimChip} border={colors.scrimChipBorder} radius={radius.chip} intensity={blur.light} style={styles.frameChip}>
+          <Text style={styles.frame} numberOfLines={1}>
+            {filename}
+          </Text>
+        </Glass>
       </View>
 
       {/* Meta-Chips unten links: Datum + Größe. */}
@@ -74,9 +76,9 @@ function PhotoCardBase({ asset, details, translateX }: Props) {
 
 function Chip({ text }: { text: string }) {
   return (
-    <BlurView intensity={18} tint="dark" style={styles.chip}>
+    <Glass tint={colors.scrimChip} border={colors.scrimChipBorder} radius={radius.chip} intensity={blur.light} style={styles.chip}>
       <Text style={styles.chipText}>{text}</Text>
-    </BlurView>
+    </Glass>
   );
 }
 
@@ -89,11 +91,15 @@ function Stamps({ translateX }: { translateX: SharedValue<number> }) {
   }));
   return (
     <>
-      <Animated.View style={[styles.stamp, styles.stampKeep, keepStyle]} pointerEvents="none">
-        <Text style={[styles.stampText, styles.stampTextKeep]}>BEHALTEN</Text>
+      <Animated.View style={[styles.stampWrap, styles.stampKeepPos, keepStyle]} pointerEvents="none">
+        <Glass tint={colors.keepGlass} border="rgba(147,179,132,0.85)" radius={radius.chip} intensity={blur.light} style={styles.stamp}>
+          <Text style={[styles.stampText, { color: colors.keepText }]}>BEHALTEN</Text>
+        </Glass>
       </Animated.View>
-      <Animated.View style={[styles.stamp, styles.stampDelete, deleteStyle]} pointerEvents="none">
-        <Text style={[styles.stampText, styles.stampTextDelete]}>LÖSCHEN</Text>
+      <Animated.View style={[styles.stampWrap, styles.stampDeletePos, deleteStyle]} pointerEvents="none">
+        <Glass tint={colors.deleteGlass} border="rgba(226,120,95,0.85)" radius={radius.chip} intensity={blur.light} style={styles.stamp}>
+          <Text style={[styles.stampText, { color: colors.deleteText }]}>LÖSCHEN</Text>
+        </Glass>
       </Animated.View>
     </>
   );
@@ -105,6 +111,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.card,
     overflow: 'hidden',
     backgroundColor: '#0a0805',
+    ...shadowCard,
   },
   imgLoader: {
     position: 'absolute',
@@ -129,45 +136,27 @@ const styles = StyleSheet.create({
   },
   gradient: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '50%' },
   frameWrap: { position: 'absolute', top: 14, left: 14, right: 14 },
+  frameChip: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6 },
   frame: {
-    fontFamily: fonts.mono400,
+    fontFamily: font.mono,
     fontSize: 10,
-    color: colors.cream70,
+    color: colors.textDim,
     letterSpacing: 0.5,
   },
   chips: { position: 'absolute', left: 14, bottom: 14, flexDirection: 'row', gap: 8 },
   chip: {
-    overflow: 'hidden',
-    borderRadius: radius.chip,
-    borderWidth: 1,
-    borderColor: colors.cream13,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  chipText: { fontFamily: fonts.mono500, fontSize: 11, color: colors.creamHi },
+  chipText: { fontFamily: font.monoMed, fontSize: 11, color: colors.text },
+  stampWrap: { position: 'absolute', top: 34 },
+  stampKeepPos: { left: 22, transform: [{ rotate: '-11deg' }] },
+  stampDeletePos: { right: 22, transform: [{ rotate: '11deg' }] },
   stamp: {
-    position: 'absolute',
-    top: 34,
-    borderWidth: 2.5,
-    borderRadius: radius.chip,
     paddingHorizontal: 12,
     paddingVertical: 5,
   },
-  stampKeep: {
-    left: 22,
-    borderColor: colors.greenBorder,
-    backgroundColor: colors.greenFillBg,
-    transform: [{ rotate: '-11deg' }],
-  },
-  stampDelete: {
-    right: 22,
-    borderColor: colors.redBorder,
-    backgroundColor: colors.redFillBg,
-    transform: [{ rotate: '11deg' }],
-  },
-  stampText: { fontFamily: fonts.mono600, fontSize: 26, letterSpacing: 1 },
-  stampTextKeep: { color: colors.greenText },
-  stampTextDelete: { color: colors.redText },
+  stampText: { fontFamily: font.monoSemi, fontSize: 26, letterSpacing: 1 },
 });
 
 export default React.memo(PhotoCardBase);

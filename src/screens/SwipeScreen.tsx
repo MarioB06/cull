@@ -14,12 +14,14 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../../App';
-import { colors, fonts, radius, shadow, spacing } from '../theme';
-import { APP_NAME, PREFETCH_COUNT } from '../constants';
+import { colors, font, radius } from '../theme';
+import { PREFETCH_COUNT } from '../constants';
 import { useStore } from '../state/store';
 import { setHapticsEnabled, hapticCommit, hapticSelection } from '../utils/haptics';
 import { getCoachShown, setCoachShown } from '../db/flags';
 import Screen from '../components/Screen';
+import AmbientScreen from '../components/AmbientScreen';
+import { Glass } from '../components/Glass';
 import CardStack, { type CardStackHandle } from '../components/CardStack';
 import Controls from '../components/Controls';
 import QueuePille from '../components/QueuePille';
@@ -115,19 +117,16 @@ export default function SwipeScreen() {
 
   return (
     <PermissionGate>
-      <Screen>
-        <LimitedBanner />
-        <Content
-          store={store}
-          cardRef={cardRef}
-          onKeep={handleKeep}
-          onDelete={handleDelete}
-          onUndo={handleUndo}
-          openQueue={openQueue}
-          openSettings={openSettings}
-          showCoach={showCoach}
-        />
-      </Screen>
+      <Content
+        store={store}
+        cardRef={cardRef}
+        onKeep={handleKeep}
+        onDelete={handleDelete}
+        onUndo={handleUndo}
+        openQueue={openQueue}
+        openSettings={openSettings}
+        showCoach={showCoach}
+      />
     </PermissionGate>
   );
 }
@@ -156,145 +155,160 @@ function Content({ store, cardRef, onKeep, onDelete, onUndo, openQueue, openSett
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pool.length, hasNextPage, loading]);
 
-  // --- Zustände ---
+  // --- Zustände ohne Foto: warme Ambiente + Glas-Panel. ---
   if (loading && pool.length === 0) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator color={colors.cream} />
-        <Text style={styles.loadingText}>Galerie wird geladen …</Text>
-      </View>
+      <AmbientScreen>
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.text} />
+          <Text style={styles.loadingText}>Galerie wird geladen …</Text>
+        </View>
+      </AmbientScreen>
     );
   }
 
-  // Keine Fotos in der Bibliothek.
   if (totalCount === 0) {
     return (
-      <View style={styles.center}>
-        <Feather name="image" size={40} color={colors.cream30} />
-        <Text style={styles.bigState}>KEINE FOTOS</Text>
-        <Text style={styles.subState}>
-          In deiner Mediathek gibt es nichts zum Durchgehen.
-        </Text>
-      </View>
+      <AmbientScreen>
+        <View style={styles.center}>
+          <Glass style={styles.statePanel}>
+            <Feather name="image" size={32} color={colors.textFaint} />
+            <Text style={styles.bigState}>KEINE FOTOS</Text>
+            <Text style={styles.subState}>In deiner Mediathek gibt es nichts zum Durchgehen.</Text>
+          </Glass>
+        </View>
+      </AmbientScreen>
     );
   }
 
-  // Alles durchgesehen.
   if (pool.length === 0) {
     return (
-      <View style={styles.center}>
-        <Feather name="check-circle" size={42} color={colors.greenText} />
-        <Text style={styles.bigState}>DURCH!</Text>
-        <Text style={styles.subState}>
-          {counts.kept} behalten · {counts.queued + counts.deleted} aussortiert
-        </Text>
-        {queueCount > 0 ? (
-          <>
-            <Text style={styles.hintState}>
-              {queueCount} Foto{queueCount === 1 ? '' : 's'} warten in der Lösch-Queue.
+      <AmbientScreen>
+        <View style={styles.center}>
+          <Glass style={styles.statePanel}>
+            <Feather name="check-circle" size={34} color={colors.keepText} />
+            <Text style={styles.bigState}>DURCH!</Text>
+            <Text style={styles.subState}>
+              {counts.kept} behalten · {counts.queued + counts.deleted} aussortiert
             </Text>
-            <Pressable
-              style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}
-              onPress={openQueue}
-            >
-              <Feather name="trash-2" size={16} color={colors.onRed} />
-              <Text style={styles.ctaText}>Queue prüfen</Text>
-            </Pressable>
-          </>
-        ) : (
-          <Text style={styles.hintState}>Alles aufgeräumt. Gut gemacht.</Text>
-        )}
-      </View>
+            {queueCount > 0 ? (
+              <>
+                <Text style={styles.hintState}>
+                  {queueCount} Foto{queueCount === 1 ? '' : 's'} warten in der Lösch-Queue.
+                </Text>
+                <Pressable onPress={openQueue}>
+                  {({ pressed }) => (
+                    <Glass
+                      tint={colors.deleteGlass}
+                      border={colors.deleteGlassBorder}
+                      style={[styles.cta, pressed && styles.ctaPressed]}
+                    >
+                      <Feather name="trash-2" size={16} color={colors.deleteText} />
+                      <Text style={styles.ctaText}>Queue prüfen</Text>
+                    </Glass>
+                  )}
+                </Pressable>
+              </>
+            ) : (
+              <Text style={styles.hintState}>Alles aufgeräumt. Gut gemacht.</Text>
+            )}
+          </Glass>
+        </View>
+      </AmbientScreen>
     );
   }
 
-  // --- Normaler Swipe-Screen ---
+  // --- Normaler Swipe-Screen: Foto als Grundebene, Glas-Chrome schwebt fix darüber. ---
   return (
-    <View style={styles.flex}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.counterRow}>
-            <Text style={styles.counterDone}>{processed}</Text>
-            <Text style={styles.counterTotal}> / {totalCount}</Text>
-          </View>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
-          </View>
-          <Text style={styles.progressLabel}>DURCHGESEHEN</Text>
+    <Screen edges={['top', 'bottom']}>
+      <LimitedBanner />
+      <View style={styles.stage}>
+        <View style={styles.cardArea}>
+          <CardStack
+            ref={cardRef}
+            pool={pool}
+            detailsCache={state.detailsCache}
+            onKeep={onKeep}
+            onDelete={onDelete}
+            onCommitHaptic={hapticCommit}
+          />
         </View>
-        <View style={styles.headerRight}>
-          {queueCount > 0 && <QueuePille count={queueCount} onPress={openQueue} />}
-          <Pressable
-            onPress={openSettings}
-            hitSlop={10}
-            style={({ pressed }) => [styles.gear, pressed && styles.gearPressed]}
-          >
-            <Feather name="sliders" size={17} color={colors.cream70} />
-          </Pressable>
-        </View>
-      </View>
 
-      {/* Karten-Stapel */}
-      <View style={styles.stackArea}>
-        <CardStack
-          ref={cardRef}
-          pool={pool}
-          detailsCache={state.detailsCache}
-          onKeep={onKeep}
-          onDelete={onDelete}
-          onCommitHaptic={hapticCommit}
-        />
+        {/* Fixe Chrome-Ebene — bewegt sich nicht mit der aktiven Karte. */}
+        <View style={styles.topBar} pointerEvents="box-none">
+          <Glass style={styles.progressPanel}>
+            <View style={styles.counterRow}>
+              <Text style={styles.counterDone}>{processed}</Text>
+              <Text style={styles.counterTotal}> / {totalCount}</Text>
+            </View>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+            </View>
+          </Glass>
+          <View style={styles.topBarRight}>
+            {queueCount > 0 && <QueuePille count={queueCount} onPress={openQueue} />}
+            <Pressable onPress={openSettings} hitSlop={10}>
+              {({ pressed }) => (
+                <Glass style={[styles.gear, pressed && styles.pressed]}>
+                  <Feather name="sliders" size={16} color={colors.text} />
+                </Glass>
+              )}
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.bottomBar} pointerEvents="box-none">
+          <Text style={styles.hintRow}>
+            <Text style={styles.hintDelete}>← LÖSCHEN</Text>
+            <Text style={styles.hintDot}> · </Text>
+            <Text style={styles.hintKeep}>BEHALTEN →</Text>
+          </Text>
+          <Controls
+            canUndo={state.undoDepth > 0}
+            onUndo={onUndo}
+            onDelete={() => cardRef.current?.swipe(-1)}
+            onKeep={() => cardRef.current?.swipe(1)}
+          />
+        </View>
+
         {showCoach && <FirstRunCoach />}
       </View>
-
-      {/* Swipe-Hinweis */}
-      <View style={styles.hintRow}>
-        <Text style={styles.hintDelete}>← LÖSCHEN</Text>
-        <Text style={styles.hintDot}> · </Text>
-        <Text style={styles.hintKeep}>BEHALTEN →</Text>
-      </View>
-
-      {/* Controls */}
-      <View style={styles.controls}>
-        <Controls
-          canUndo={state.undoDepth > 0}
-          onUndo={onUndo}
-          onDelete={() => cardRef.current?.swipe(-1)}
-          onKeep={() => cardRef.current?.swipe(1)}
-        />
-      </View>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
-    gap: 14,
   },
-  loadingText: { fontFamily: fonts.mono400, fontSize: 12, color: colors.cream40 },
+  statePanel: {
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 28,
+    paddingHorizontal: 26,
+    minWidth: 220,
+  },
+  loadingText: { fontFamily: font.mono, fontSize: 12, color: colors.textFaint, marginTop: 14 },
   bigState: {
-    fontFamily: fonts.mono600,
-    fontSize: 22,
+    fontFamily: font.monoSemi,
+    fontSize: 20,
     letterSpacing: 2,
-    color: colors.cream,
-    marginTop: 4,
+    color: colors.text,
+    marginTop: 2,
   },
   subState: {
-    fontFamily: fonts.mono400,
+    fontFamily: font.mono,
     fontSize: 12,
-    color: colors.cream55,
+    color: colors.textDim,
     textAlign: 'center',
   },
   hintState: {
-    fontFamily: fonts.sans400,
+    fontFamily: font.sans,
     fontSize: 13,
-    color: colors.cream40,
+    color: colors.textFaint,
     textAlign: 'center',
     marginTop: 4,
   },
@@ -302,68 +316,65 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 12,
-    backgroundColor: colors.redFill,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: radius.button,
-    ...shadow.glow(colors.redBright),
+    marginTop: 10,
+    paddingVertical: 13,
+    paddingHorizontal: 22,
   },
-  ctaPressed: { opacity: 0.85 },
-  ctaText: { fontFamily: fonts.sans600, fontSize: 15, color: colors.onRed },
+  ctaPressed: { opacity: 0.8 },
+  ctaText: { fontFamily: font.sansSemi, fontSize: 15, color: colors.deleteText },
 
-  header: {
+  stage: { flex: 1 },
+  cardArea: {
+    position: 'absolute',
+    top: 14,
+    left: 14,
+    right: 14,
+    bottom: 14,
+  },
+
+  topBar: {
+    position: 'absolute',
+    top: 14,
+    left: 14,
+    right: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingHorizontal: spacing.screenH,
-    paddingTop: 12,
-    paddingBottom: 8,
   },
-  headerLeft: { flex: 1, paddingRight: 12 },
+  progressPanel: { paddingHorizontal: 14, paddingVertical: 10, minWidth: 108 },
   counterRow: { flexDirection: 'row', alignItems: 'baseline' },
-  counterDone: { fontFamily: fonts.mono500, fontSize: 15, color: colors.cream },
-  counterTotal: { fontFamily: fonts.mono400, fontSize: 15, color: colors.cream38 },
+  counterDone: { fontFamily: font.monoMed, fontSize: 15, color: colors.text },
+  counterTotal: { fontFamily: font.mono, fontSize: 13, color: colors.textFaint },
   progressTrack: {
     height: 3,
-    backgroundColor: colors.cream13,
+    backgroundColor: 'rgba(255,255,255,0.25)',
     borderRadius: 2,
     marginTop: 8,
     overflow: 'hidden',
-    maxWidth: 180,
+    width: 90,
   },
-  progressFill: { height: 3, backgroundColor: colors.accent, borderRadius: 2 },
-  progressLabel: {
-    fontFamily: fonts.mono400,
-    fontSize: 9,
-    letterSpacing: 1.6,
-    color: colors.cream30,
-    marginTop: 6,
-  },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 2 },
+  progressFill: { height: 3, backgroundColor: colors.white, borderRadius: 2 },
+
+  topBarRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   gear: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 1,
-    borderColor: colors.cream13,
-    backgroundColor: 'rgba(236,227,212,0.04)',
+    width: 38,
+    height: 38,
+    borderRadius: radius.circle,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  gearPressed: { opacity: 0.7 },
+  pressed: { opacity: 0.75 },
 
-  stackArea: {
-    flex: 1,
-    marginHorizontal: spacing.screenH,
-    marginTop: 6,
-    marginBottom: 6,
+  bottomBar: {
+    position: 'absolute',
+    bottom: 14,
+    left: 14,
+    right: 14,
+    alignItems: 'center',
+    gap: 12,
   },
-
-  hintRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 10 },
-  hintDelete: { fontFamily: fonts.mono400, fontSize: 9, letterSpacing: 1.4, color: 'rgba(217,116,95,0.6)' },
-  hintKeep: { fontFamily: fonts.mono400, fontSize: 9, letterSpacing: 1.4, color: 'rgba(147,179,132,0.6)' },
-  hintDot: { fontFamily: fonts.mono400, fontSize: 9, color: colors.cream30 },
-
-  controls: { paddingBottom: 14, paddingTop: 4 },
+  hintRow: { textAlign: 'center' },
+  hintDelete: { fontFamily: font.mono, fontSize: 9, letterSpacing: 1.4, color: 'rgba(226,120,95,0.75)' },
+  hintKeep: { fontFamily: font.mono, fontSize: 9, letterSpacing: 1.4, color: 'rgba(147,179,132,0.75)' },
+  hintDot: { fontFamily: font.mono, fontSize: 9, color: colors.textFaint },
 });

@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import PhotoCard from './PhotoCard';
 import type { Asset, AssetDetails } from '../media';
-import { radius, shadow } from '../theme';
+import { radius } from '../theme';
 import { SWIPE_THRESHOLD, SWIPE_VELOCITY_THRESHOLD, ROTATION_DIVISOR } from '../constants';
 
 export interface CardStackHandle {
@@ -114,7 +114,7 @@ const CardStack = forwardRef<CardStackHandle, Props>(function CardStack(
               <PhotoCard asset={asset} details={detailsCache[asset.id]} />
               <View
                 pointerEvents="none"
-                style={[styles.overlay, { backgroundColor: `rgba(11,9,7,${overlay})` }]}
+                style={[styles.overlay, { backgroundColor: `rgba(14,11,9,${overlay})` }]}
               />
             </View>
           );
@@ -142,7 +142,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderRadius: radius.card,
-    ...shadow.card,
   },
   overlay: {
     position: 'absolute',

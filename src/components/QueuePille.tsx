@@ -1,25 +1,31 @@
 import React from 'react';
-import { Text, StyleSheet, Pressable, View } from 'react-native';
+import { Text, StyleSheet, Pressable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-import { colors, fonts, radius, shadow } from '../theme';
+import { colors, font, radius, blur } from '../theme';
+import { Glass } from './Glass';
 
 interface Props {
   count: number;
   onPress: () => void;
 }
 
-/** Rote Pille rechts im Header: "{n} zum Löschen" → öffnet die Queue. */
+/** Getönte Glas-Pille rechts oben: "{n}" → öffnet die Queue. */
 export default function QueuePille({ count, onPress }: Props) {
   return (
-    <Pressable
-      style={({ pressed }) => [styles.pille, pressed && styles.pressed]}
-      onPress={onPress}
-      hitSlop={8}
-    >
-      <View style={styles.dot} />
-      <Feather name="trash-2" size={12} color={colors.redText} />
-      <Text style={styles.text}>{count} zum Löschen</Text>
+    <Pressable onPress={onPress} hitSlop={8}>
+      {({ pressed }) => (
+        <Glass
+          tint={colors.deleteGlass}
+          border={colors.deleteGlassBorder}
+          radius={radius.circle}
+          intensity={blur.panel}
+          style={[styles.pille, pressed && styles.pressed]}
+        >
+          <Feather name="trash-2" size={13} color={colors.deleteText} />
+          <Text style={styles.text}>{count}</Text>
+        </Glass>
+      )}
     </Pressable>
   );
 }
@@ -29,15 +35,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    borderWidth: 1,
-    borderColor: colors.redBorder40,
-    backgroundColor: colors.redFillBg,
-    borderRadius: radius.pill,
     paddingHorizontal: 12,
-    paddingVertical: 7,
-    ...shadow.glow(colors.redBright),
+    paddingVertical: 9,
   },
-  pressed: { opacity: 0.7 },
-  dot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.redBright },
-  text: { fontFamily: fonts.mono500, fontSize: 12, color: colors.redText },
+  pressed: { opacity: 0.75 },
+  text: { fontFamily: font.monoMed, fontSize: 13, color: colors.deleteText },
 });

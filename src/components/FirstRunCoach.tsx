@@ -1,17 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { colors, fonts, radius, shadow } from '../theme';
+import { colors, font, radius, blur } from '../theme';
+import { Glass } from './Glass';
 
 /** Dezenter Einmal-Hinweis auf der allerersten Swipe-Karte. */
 export default function FirstRunCoach() {
   return (
     <View style={styles.wrap} pointerEvents="none">
-      <BlurView intensity={30} tint="dark" style={styles.pill}>
+      <Glass tint={colors.glass} border={colors.glassBorder} radius={radius.circle} intensity={blur.panel} style={styles.pill}>
         <Text style={styles.textDelete}>← Löschen</Text>
         <Text style={styles.dot}>·</Text>
         <Text style={styles.textKeep}>Behalten →</Text>
-      </BlurView>
+      </Glass>
     </View>
   );
 }
@@ -30,15 +30,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.cream13,
-    borderRadius: radius.pill,
     paddingHorizontal: 16,
     paddingVertical: 11,
-    ...shadow.raised,
   },
-  textDelete: { fontFamily: fonts.mono500, fontSize: 12, color: colors.redText },
-  textKeep: { fontFamily: fonts.mono500, fontSize: 12, color: colors.greenText },
-  dot: { fontFamily: fonts.mono400, fontSize: 12, color: colors.cream30 },
+  textDelete: { fontFamily: font.monoMed, fontSize: 12, color: colors.deleteText },
+  textKeep: { fontFamily: font.monoMed, fontSize: 12, color: colors.keepText },
+  dot: { fontFamily: font.mono, fontSize: 12, color: colors.textFaint },
 });
