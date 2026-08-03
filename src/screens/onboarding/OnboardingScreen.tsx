@@ -6,13 +6,14 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../../../App';
-import { colors, fonts, radius, shadow, spacing } from '../../theme';
+import { colors, font, radius, spacing } from '../../theme';
 import { APP_NAME } from '../../constants';
 import { useStore } from '../../state/store';
 import { checkPermission } from '../../media';
 import { setOnboardingCompleted } from '../../db/flags';
 import Dots from '../../components/onboarding/Dots';
-import Screen from '../../components/Screen';
+import AmbientScreen from '../../components/AmbientScreen';
+import { Glass } from '../../components/Glass';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Step = 0 | 1 | 2 | 'recovery';
@@ -59,7 +60,7 @@ export default function OnboardingScreen() {
   }, [step, finish]);
 
   return (
-    <Screen>
+    <AmbientScreen>
       <StatusBar style="light" />
       {step === 0 && <WelcomeStep onNext={() => setStep(1)} />}
       {step === 1 && <HowItWorksStep onNext={() => setStep(2)} />}
@@ -67,15 +68,40 @@ export default function OnboardingScreen() {
         <PermissionStep onRequest={requestAccess} requesting={requesting} />
       )}
       {step === 'recovery' && <RecoveryStep />}
-    </Screen>
+    </AmbientScreen>
+  );
+}
+
+function GlassCta({
+  label,
+  onPress,
+  disabled,
+}: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <Pressable onPress={onPress} disabled={disabled}>
+      {({ pressed }) => (
+        <Glass
+          tint={colors.glassStrong}
+          border={colors.glassBorderStrong}
+          radius={radius.panel}
+          style={[styles.cta, (pressed || disabled) && styles.pressed]}
+        >
+          <Text style={styles.ctaText}>{label}</Text>
+        </Glass>
+      )}
+    </Pressable>
   );
 }
 
 function CMark() {
   return (
-    <View style={styles.mark}>
+    <Glass tint={colors.glass} border={colors.glassBorder} radius={40} style={styles.mark}>
       <Text style={styles.markText}>C</Text>
-    </View>
+    </Glass>
   );
 }
 
@@ -89,12 +115,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
       </View>
       <View style={styles.bottom}>
         <Dots count={3} active={0} />
-        <Pressable
-          style={({ pressed }) => [styles.ctaFill, pressed && styles.pressed]}
-          onPress={onNext}
-        >
-          <Text style={styles.ctaFillText}>Los geht&apos;s</Text>
-        </Pressable>
+        <GlassCta label="Los geht's" onPress={onNext} />
       </View>
     </View>
   );
@@ -106,19 +127,19 @@ function HowItWorksStep({ onNext }: { onNext: () => void }) {
       <View style={styles.center}>
         <View style={styles.vizRow}>
           <View style={styles.vizSide}>
-            <View style={[styles.vizArrow, { borderColor: colors.redBorder40, backgroundColor: colors.redFillBg }]}>
-              <Feather name="arrow-left" size={20} color={colors.redText} />
-            </View>
-            <Text style={[styles.vizLabel, { color: colors.redText }]}>LÖSCHEN</Text>
+            <Glass tint={colors.deleteGlass} border={colors.deleteGlassBorder} radius={22} style={styles.vizArrow}>
+              <Feather name="arrow-left" size={20} color={colors.deleteText} />
+            </Glass>
+            <Text style={[styles.vizLabel, { color: colors.deleteText }]}>LÖSCHEN</Text>
           </View>
-          <View style={styles.vizCard}>
-            <Feather name="image" size={26} color={colors.cream30} />
-          </View>
+          <Glass tint={colors.glass} border={colors.glassBorder} radius={radius.card * 0.6} style={styles.vizCard}>
+            <Feather name="image" size={26} color={colors.textFaint} />
+          </Glass>
           <View style={styles.vizSide}>
-            <View style={[styles.vizArrow, { borderColor: colors.greenFillBg, backgroundColor: colors.greenFillBg }]}>
-              <Feather name="arrow-right" size={20} color={colors.greenText} />
-            </View>
-            <Text style={[styles.vizLabel, { color: colors.greenText }]}>BEHALTEN</Text>
+            <Glass tint={colors.keepGlass} border={colors.keepGlassBorder} radius={22} style={styles.vizArrow}>
+              <Feather name="arrow-right" size={20} color={colors.keepText} />
+            </Glass>
+            <Text style={[styles.vizLabel, { color: colors.keepText }]}>BEHALTEN</Text>
           </View>
         </View>
         <Text style={styles.headline}>Rechts behalten, links löschen.</Text>
@@ -128,12 +149,7 @@ function HowItWorksStep({ onNext }: { onNext: () => void }) {
       </View>
       <View style={styles.bottom}>
         <Dots count={3} active={1} />
-        <Pressable
-          style={({ pressed }) => [styles.ctaOutline, pressed && styles.pressed]}
-          onPress={onNext}
-        >
-          <Text style={styles.ctaOutlineText}>Weiter</Text>
-        </Pressable>
+        <GlassCta label="Weiter" onPress={onNext} />
       </View>
     </View>
   );
@@ -149,9 +165,9 @@ function PermissionStep({
   return (
     <View style={styles.step}>
       <View style={styles.center}>
-        <View style={styles.iconCircle}>
-          <Feather name="lock" size={24} color={colors.accent} />
-        </View>
+        <Glass tint={colors.glass} border={colors.glassBorder} radius={31} style={styles.iconCircle}>
+          <Feather name="lock" size={24} color={colors.text} />
+        </Glass>
         <Text style={styles.headline}>Bleibt auf deinem Gerät.</Text>
         <Text style={styles.body}>
           Kein Konto, kein Upload, keine Cloud. {APP_NAME} braucht nur Zugriff auf deine Fotos,
@@ -160,13 +176,7 @@ function PermissionStep({
       </View>
       <View style={styles.bottom}>
         <Dots count={3} active={2} />
-        <Pressable
-          style={({ pressed }) => [styles.ctaFill, pressed && styles.pressed, requesting && styles.disabled]}
-          onPress={onRequest}
-          disabled={requesting}
-        >
-          <Text style={styles.ctaFillText}>Fotozugriff erlauben</Text>
-        </Pressable>
+        <GlassCta label="Fotozugriff erlauben" onPress={onRequest} disabled={requesting} />
         <Text style={styles.footnote}>Du kannst den Zugriff jederzeit widerrufen.</Text>
       </View>
     </View>
@@ -177,19 +187,14 @@ function RecoveryStep() {
   return (
     <View style={styles.step}>
       <View style={styles.center}>
-        <View style={styles.iconCircle}>
-          <Feather name="alert-circle" size={24} color={colors.accent} />
-        </View>
+        <Glass tint={colors.glass} border={colors.glassBorder} radius={31} style={styles.iconCircle}>
+          <Feather name="alert-circle" size={24} color={colors.text} />
+        </Glass>
         <Text style={styles.headline}>Kein Foto-Zugriff</Text>
         <Text style={styles.body}>Ohne Fotozugriff kann {APP_NAME} nichts anzeigen.</Text>
       </View>
       <View style={styles.bottom}>
-        <Pressable
-          style={({ pressed }) => [styles.ctaFill, pressed && styles.pressed]}
-          onPress={() => Linking.openSettings()}
-        >
-          <Text style={styles.ctaFillText}>Einstellungen öffnen</Text>
-        </Pressable>
+        <GlassCta label="Einstellungen öffnen" onPress={() => Linking.openSettings()} />
       </View>
     </View>
   );
@@ -201,24 +206,19 @@ const styles = StyleSheet.create({
   bottom: { paddingBottom: 18, gap: 18 },
 
   mark: {
-    width: 68,
-    height: 68,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: colors.accentBorder,
-    backgroundColor: colors.accentBg,
+    width: 80,
+    height: 80,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
-    ...shadow.glow(colors.accent),
   },
-  markText: { fontFamily: fonts.mono600, fontSize: 30, color: colors.accentBright },
-  wordmark: { fontFamily: fonts.mono500, fontSize: 20, letterSpacing: 1, color: colors.cream },
+  markText: { fontFamily: font.monoSemi, fontSize: 32, color: colors.text },
+  wordmark: { fontFamily: font.monoMed, fontSize: 20, letterSpacing: 1, color: colors.text },
   subline: {
-    fontFamily: fonts.sans400,
+    fontFamily: font.sans,
     fontSize: 14,
     lineHeight: 21,
-    color: colors.creamHi,
+    color: colors.textDim,
     textAlign: 'center',
     marginTop: 2,
   },
@@ -226,27 +226,22 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 62,
     height: 62,
-    borderRadius: 31,
-    borderWidth: 1,
-    borderColor: colors.accentBorder,
-    backgroundColor: colors.accentBg,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
-    ...shadow.glow(colors.accent),
   },
 
   headline: {
-    fontFamily: fonts.sans500,
+    fontFamily: font.sansMed,
     fontSize: 21,
-    color: colors.cream,
+    color: colors.text,
     textAlign: 'center',
   },
   body: {
-    fontFamily: fonts.sans400,
+    fontFamily: font.sans,
     fontSize: 14,
     lineHeight: 21,
-    color: colors.cream55,
+    color: colors.textDim,
     textAlign: 'center',
   },
 
@@ -261,46 +256,27 @@ const styles = StyleSheet.create({
   vizArrow: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  vizLabel: { fontFamily: fonts.mono500, fontSize: 10, letterSpacing: 1.2 },
+  vizLabel: { fontFamily: font.monoMed, fontSize: 10, letterSpacing: 1.2 },
   vizCard: {
     width: 92,
     height: 128,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.cream13,
-    backgroundColor: 'rgba(236,227,212,0.04)',
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadow.raised,
   },
 
-  ctaFill: {
-    backgroundColor: colors.accent,
+  cta: {
     paddingVertical: 17,
-    borderRadius: radius.button,
-    alignItems: 'center',
-    ...shadow.glow(colors.accent),
-  },
-  ctaFillText: { fontFamily: fonts.sans600, fontSize: 16, color: colors.onAccent },
-  ctaOutline: {
-    borderWidth: 1.5,
-    borderColor: colors.cream25,
-    paddingVertical: 17,
-    borderRadius: radius.button,
     alignItems: 'center',
   },
-  ctaOutlineText: { fontFamily: fonts.sans600, fontSize: 16, color: colors.cream },
-  pressed: { opacity: 0.85 },
-  disabled: { opacity: 0.6 },
+  ctaText: { fontFamily: font.sansSemi, fontSize: 16, color: colors.white },
+  pressed: { opacity: 0.8 },
   footnote: {
-    fontFamily: fonts.mono400,
+    fontFamily: font.mono,
     fontSize: 11,
-    color: colors.cream40,
+    color: colors.textFaint,
     textAlign: 'center',
   },
 });
