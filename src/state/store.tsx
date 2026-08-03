@@ -154,7 +154,7 @@ interface StoreApi {
   state: State;
   // Lebenszyklus
   initialize: () => Promise<void>;
-  requestPermission: () => Promise<void>;
+  requestPermission: () => Promise<PermissionResult>;
   recheckPermission: () => Promise<void>;
   reloadGallery: () => Promise<void>;
   // Entscheidungen
@@ -302,12 +302,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, [reloadGallery]);
 
-  const requestPermission = useCallback(async () => {
+  const requestPermission = useCallback(async (): Promise<PermissionResult> => {
     const perm = await Media.requestPermission();
     dispatch({ type: 'SET_PERMISSION', permission: perm });
     if (perm.state === 'granted' || perm.state === 'limited') {
       await reloadGallery();
     }
+    return perm;
   }, [reloadGallery]);
 
   const recheckPermission = useCallback(async () => {

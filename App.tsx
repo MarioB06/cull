@@ -21,14 +21,20 @@ import {
 
 import { colors } from './src/theme';
 import { StoreProvider } from './src/state/store';
+import { PurchasesProvider } from './src/state/purchases';
+import { getOnboardingCompleted } from './src/db/flags';
+import OnboardingScreen from './src/screens/onboarding/OnboardingScreen';
 import SwipeScreen from './src/screens/SwipeScreen';
 import QueueScreen from './src/screens/QueueScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import PaywallScreen from './src/screens/PaywallScreen';
 
 export type RootStackParamList = {
+  Onboarding: undefined;
   Swipe: undefined;
   Queue: undefined;
   Settings: undefined;
+  Paywall: { freedBytes?: number } | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -56,6 +62,8 @@ export default function App() {
     IBMPlexMono_600SemiBold,
   });
 
+  const [onboardingDone, setOnboardingDone] = React.useState<boolean | null>(null);
+
   useEffect(() => {
     if (fontError) {
       // Fonts sind nicht hart erforderlich — App startet trotzdem (System-Font-Fallback).
@@ -64,7 +72,11 @@ export default function App() {
     }
   }, [fontError]);
 
-  if (!fontsLoaded && !fontError) {
+  useEffect(() => {
+    void getOnboardingCompleted().then(setOnboardingDone);
+  }, []);
+
+  if ((!fontsLoaded && !fontError) || onboardingDone === null) {
     return (
       <View style={styles.loader}>
         <StatusBar style="light" />
@@ -77,29 +89,41 @@ export default function App() {
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <StoreProvider>
-          <StatusBar style="light" />
-          <NavigationContainer theme={navTheme}>
-            <Stack.Navigator
-              initialRouteName="Swipe"
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: colors.screenBg },
-                animation: 'slide_from_bottom',
-              }}
-            >
-              <Stack.Screen name="Swipe" component={SwipeScreen} options={{ animation: 'fade' }} />
-              <Stack.Screen
-                name="Queue"
-                component={QueueScreen}
-                options={{ presentation: 'modal' }}
-              />
-              <Stack.Screen
-                name="Settings"
-                component={SettingsScreen}
-                options={{ presentation: 'modal' }}
-              />
-            </Stack.Navigator>
-          </NavigationContainer>
+          <PurchasesProvider>
+            <StatusBar style="light" />
+            <NavigationContainer theme={navTheme}>
+              <Stack.Navigator
+                initialRouteName={onboardingDone ? 'Swipe' : 'Onboarding'}
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: colors.screenBg },
+                  animation: 'slide_from_bottom',
+                }}
+              >
+                <Stack.Screen
+                  name="Onboarding"
+                  component={OnboardingScreen}
+                  options={{ animation: 'fade' }}
+                />
+                <Stack.Screen name="Swipe" component={SwipeScreen} options={{ animation: 'fade' }} />
+                <Stack.Screen
+                  name="Queue"
+                  component={QueueScreen}
+                  options={{ presentation: 'modal' }}
+                />
+                <Stack.Screen
+                  name="Settings"
+                  component={SettingsScreen}
+                  options={{ presentation: 'modal' }}
+                />
+                <Stack.Screen
+                  name="Paywall"
+                  component={PaywallScreen}
+                  options={{ presentation: 'modal' }}
+                />
+              </Stack.Navigator>
+            </NavigationContainer>
+          </PurchasesProvider>
         </StoreProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

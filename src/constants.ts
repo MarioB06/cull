@@ -36,3 +36,7 @@ export const FREE_DELETE_LIMIT = 200;
 // inaktiv und die App nutzt automatisch den Mock (auch in einem Dev-Build).
 export const REVENUECAT_API_KEY_IOS = '';
 export const REVENUECAT_API_KEY_ANDROID = '';
+
+// Rechtstexte für die Paywall (App-Store-Pflicht). Siehe SETUP.md.
+export const TERMS_URL = '';
+export const PRIVACY_URL = '';

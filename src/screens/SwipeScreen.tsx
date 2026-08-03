@@ -19,11 +19,13 @@ import { colors, fonts, spacing } from '../theme';
 import { APP_NAME, PREFETCH_COUNT } from '../constants';
 import { useStore } from '../state/store';
 import { setHapticsEnabled, hapticCommit, hapticSelection } from '../utils/haptics';
+import { getCoachShown, setCoachShown } from '../db/flags';
 import CardStack, { type CardStackHandle } from '../components/CardStack';
 import Controls from '../components/Controls';
 import QueuePille from '../components/QueuePille';
 import PermissionGate from '../components/PermissionGate';
 import LimitedBanner from '../components/LimitedBanner';
+import FirstRunCoach from '../components/FirstRunCoach';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -40,6 +42,21 @@ export default function SwipeScreen() {
     didInit.current = true;
     void store.initialize();
   }, [store]);
+
+  // First-Run-Coach: einmaliger Hinweis auf der allerersten Swipe-Karte.
+  const [showCoach, setShowCoach] = React.useState(false);
+  const coachHandled = useRef(false);
+  useEffect(() => {
+    void getCoachShown().then((shown) => {
+      if (!shown) setShowCoach(true);
+    });
+  }, []);
+  const dismissCoach = useCallback(() => {
+    if (coachHandled.current) return;
+    coachHandled.current = true;
+    setShowCoach(false);
+    void setCoachShown(true);
+  }, []);
 
   // Haptik-Setting in den Helper spiegeln.
   useEffect(() => {
@@ -80,8 +97,14 @@ export default function SwipeScreen() {
     }
   }, [pool, state.detailsCache, state.settings.skipFavorites, store]);
 
-  const handleKeep = useCallback(() => store.decideKeep(), [store]);
-  const handleDelete = useCallback(() => store.decideDelete(), [store]);
+  const handleKeep = useCallback(() => {
+    dismissCoach();
+    return store.decideKeep();
+  }, [store, dismissCoach]);
+  const handleDelete = useCallback(() => {
+    dismissCoach();
+    return store.decideDelete();
+  }, [store, dismissCoach]);
   const handleUndo = useCallback(() => {
     hapticSelection();
     void store.undo();
@@ -102,6 +125,7 @@ export default function SwipeScreen() {
           onUndo={handleUndo}
           openQueue={openQueue}
           openSettings={openSettings}
+          showCoach={showCoach}
         />
       </SafeAreaView>
     </PermissionGate>
@@ -116,9 +140,10 @@ interface ContentProps {
   onUndo: () => void;
   openQueue: () => void;
   openSettings: () => void;
+  showCoach: boolean;
 }
 
-function Content({ store, cardRef, onKeep, onDelete, onUndo, openQueue, openSettings }: ContentProps) {
+function Content({ store, cardRef, onKeep, onDelete, onUndo, openQueue, openSettings, showCoach }: ContentProps) {
   const { state } = store;
   const { processed, totalCount, pool, queueCount, counts, loading, hasNextPage } = state;
   const progress = totalCount > 0 ? Math.min(1, processed / totalCount) : 0;
@@ -216,6 +241,7 @@ function Content({ store, cardRef, onKeep, onDelete, onUndo, openQueue, openSett
           onDelete={onDelete}
           onCommitHaptic={hapticCommit}
         />
+        {showCoach && <FirstRunCoach />}
       </View>
 
       {/* Swipe-Hinweis */}
