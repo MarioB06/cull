@@ -14,7 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../../App';
-import { colors, font, radius } from '../theme';
+import { colors, font, radius, spacing } from '../theme';
 import { PREFETCH_COUNT } from '../constants';
 import { useStore } from '../state/store';
 import { setHapticsEnabled, hapticCommit, hapticSelection } from '../utils/haptics';
@@ -296,10 +296,10 @@ function SettingsCorner({ onPress }: { onPress: () => void }) {
 
 const styles = StyleSheet.create({
   settingsCorner: {
-    position: 'absolute',
-    top: 14,
-    right: 14,
-    zIndex: 1,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: spacing.screenH,
+    paddingTop: 12,
   },
   center: {
     flex: 1,
