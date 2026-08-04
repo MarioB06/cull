@@ -170,6 +170,7 @@ function Content({ store, cardRef, onKeep, onDelete, onUndo, openQueue, openSett
   if (totalCount === 0) {
     return (
       <AmbientScreen>
+        <SettingsCorner onPress={openSettings} />
         <View style={styles.center}>
           <Glass style={styles.statePanel}>
             <Feather name="image" size={32} color={colors.textFaint} />
@@ -184,6 +185,7 @@ function Content({ store, cardRef, onKeep, onDelete, onUndo, openQueue, openSett
   if (pool.length === 0) {
     return (
       <AmbientScreen>
+        <SettingsCorner onPress={openSettings} />
         <View style={styles.center}>
           <Glass style={styles.statePanel}>
             <Feather name="check-circle" size={34} color={colors.keepText} />
@@ -277,7 +279,28 @@ function Content({ store, cardRef, onKeep, onDelete, onUndo, openQueue, openSett
   );
 }
 
+/** Settings-Zugriff für die Ambiente-Zustände (keine Fotos / alles durch) — sonst gäbe es keinen Weg dorthin. */
+function SettingsCorner({ onPress }: { onPress: () => void }) {
+  return (
+    <View style={styles.settingsCorner}>
+      <Pressable onPress={onPress} hitSlop={10}>
+        {({ pressed }) => (
+          <Glass style={[styles.gear, pressed && styles.pressed]}>
+            <Feather name="sliders" size={16} color={colors.text} />
+          </Glass>
+        )}
+      </Pressable>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  settingsCorner: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    zIndex: 1,
+  },
   center: {
     flex: 1,
     alignItems: 'center',
