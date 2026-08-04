@@ -218,60 +218,60 @@ function Content({ store, cardRef, onKeep, onDelete, onUndo, openQueue, openSett
     );
   }
 
-  // --- Normaler Swipe-Screen: Foto als Grundebene, Glas-Chrome schwebt fix darüber. ---
+  // --- Normaler Swipe-Screen: Glas-Chrome in eigenem Bereich, Foto bleibt vollständig frei. ---
   return (
     <Screen edges={['top', 'bottom']}>
       <LimitedBanner />
-      <View style={styles.stage}>
-        <View style={styles.cardArea}>
-          <CardStack
-            ref={cardRef}
-            pool={pool}
-            detailsCache={state.detailsCache}
-            onKeep={onKeep}
-            onDelete={onDelete}
-            onCommitHaptic={hapticCommit}
-          />
-        </View>
 
-        {/* Fixe Chrome-Ebene — bewegt sich nicht mit der aktiven Karte. */}
-        <View style={styles.topBar} pointerEvents="box-none">
-          <Glass style={styles.progressPanel}>
-            <View style={styles.counterRow}>
-              <Text style={styles.counterDone}>{processed}</Text>
-              <Text style={styles.counterTotal}> / {totalCount}</Text>
-            </View>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
-            </View>
-          </Glass>
-          <View style={styles.topBarRight}>
-            {queueCount > 0 && <QueuePille count={queueCount} onPress={openQueue} />}
-            <Pressable onPress={openSettings} hitSlop={10}>
-              {({ pressed }) => (
-                <Glass style={[styles.gear, pressed && styles.pressed]}>
-                  <Feather name="sliders" size={16} color={colors.text} />
-                </Glass>
-              )}
-            </Pressable>
+      {/* Chrome oben — eigene Zeile, überlappt die Karte nicht. */}
+      <View style={styles.topBar}>
+        <Glass style={styles.progressPanel}>
+          <View style={styles.counterRow}>
+            <Text style={styles.counterDone}>{processed}</Text>
+            <Text style={styles.counterTotal}> / {totalCount}</Text>
           </View>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+          </View>
+        </Glass>
+        <View style={styles.topBarRight}>
+          {queueCount > 0 && <QueuePille count={queueCount} onPress={openQueue} />}
+          <Pressable onPress={openSettings} hitSlop={10}>
+            {({ pressed }) => (
+              <Glass style={[styles.gear, pressed && styles.pressed]}>
+                <Feather name="sliders" size={16} color={colors.text} />
+              </Glass>
+            )}
+          </Pressable>
         </View>
+      </View>
 
-        <View style={styles.bottomBar} pointerEvents="box-none">
-          <Text style={styles.hintRow}>
-            <Text style={styles.hintDelete}>← LÖSCHEN</Text>
-            <Text style={styles.hintDot}> · </Text>
-            <Text style={styles.hintKeep}>BEHALTEN →</Text>
-          </Text>
-          <Controls
-            canUndo={state.undoDepth > 0}
-            onUndo={onUndo}
-            onDelete={() => cardRef.current?.swipe(-1)}
-            onKeep={() => cardRef.current?.swipe(1)}
-          />
-        </View>
-
+      {/* Karten-Stapel — bekommt den ganzen restlichen Platz, nichts überlappt das Foto. */}
+      <View style={styles.cardArea}>
+        <CardStack
+          ref={cardRef}
+          pool={pool}
+          detailsCache={state.detailsCache}
+          onKeep={onKeep}
+          onDelete={onDelete}
+          onCommitHaptic={hapticCommit}
+        />
         {showCoach && <FirstRunCoach />}
+      </View>
+
+      {/* Chrome unten — eigene Zeile. */}
+      <View style={styles.bottomBar}>
+        <Text style={styles.hintRow}>
+          <Text style={styles.hintDelete}>← LÖSCHEN</Text>
+          <Text style={styles.hintDot}> · </Text>
+          <Text style={styles.hintKeep}>BEHALTEN →</Text>
+        </Text>
+        <Controls
+          canUndo={state.undoDepth > 0}
+          onUndo={onUndo}
+          onDelete={() => cardRef.current?.swipe(-1)}
+          onKeep={() => cardRef.current?.swipe(1)}
+        />
       </View>
     </Screen>
   );
@@ -323,20 +323,16 @@ const styles = StyleSheet.create({
   ctaPressed: { opacity: 0.8 },
   ctaText: { fontFamily: font.sansSemi, fontSize: 15, color: colors.deleteText },
 
-  stage: { flex: 1 },
   cardArea: {
-    position: 'absolute',
-    top: 14,
-    left: 14,
-    right: 14,
-    bottom: 14,
+    flex: 1,
+    marginHorizontal: 14,
+    marginBottom: 14,
   },
 
   topBar: {
-    position: 'absolute',
-    top: 14,
-    left: 14,
-    right: 14,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
@@ -366,10 +362,9 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.75 },
 
   bottomBar: {
-    position: 'absolute',
-    bottom: 14,
-    left: 14,
-    right: 14,
+    paddingHorizontal: 14,
+    paddingTop: 4,
+    paddingBottom: 14,
     alignItems: 'center',
     gap: 12,
   },
