@@ -11,14 +11,15 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cull.app",
+      "bundleIdentifier": "com.mariobozic.cull",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Cull braucht Zugriff auf deine Fotos, um sie hier durchzugehen und auszumisten. Es verlässt nichts dein Gerät.",
-        "NSPhotoLibraryAddUsageDescription": "Cull braucht Zugriff auf deine Fotomediathek, um markierte Fotos zu entfernen. Es verlässt nichts dein Gerät."
+        "NSPhotoLibraryAddUsageDescription": "Cull braucht Zugriff auf deine Fotomediathek, um markierte Fotos zu entfernen. Es verlässt nichts dein Gerät.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.cull.app",
+      "package": "com.mariobozic.cull",
       "adaptiveIcon": {
         "backgroundColor": "#15110d",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -28,7 +29,12 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.READ_MEDIA_IMAGES",
-        "android.permission.READ_MEDIA_VIDEO"
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.ACCESS_MEDIA_LOCATION",
+        "android.permission.READ_MEDIA_AUDIO"
       ]
     },
     "plugins": [
@@ -45,6 +51,11 @@
     ],
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "dd2a6523-1a03-46cb-9bbf-3beb94071754"
+      }
     }
   }
 }
