@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-import { colors, radius, blur } from '../theme';
+import { colors, blur } from '../theme';
 import { Glass } from './Glass';
 
 interface Props {
@@ -13,10 +13,24 @@ interface Props {
   disabled?: boolean;
 }
 
-/** Drei schwebende Glas-Buttons: Undo · Löschen · Behalten. */
+/** Drei gleich grosse Glas-Pillen: Löschen · Undo (Mitte) · Behalten. */
 export default function Controls({ canUndo, onUndo, onDelete, onKeep, disabled }: Props) {
   return (
     <View style={styles.row}>
+      <Pressable onPress={onDelete} disabled={disabled} hitSlop={6}>
+        {({ pressed }) => (
+          <Glass
+            tint={colors.deleteGlass}
+            border={colors.deleteGlassBorder}
+            radius={28}
+            intensity={blur.panel}
+            style={[styles.btn, pressed && styles.pressed]}
+          >
+            <Feather name="x" size={26} color={colors.deleteText} />
+          </Glass>
+        )}
+      </Pressable>
+
       <Pressable
         onPress={onUndo}
         disabled={!canUndo || disabled}
@@ -27,25 +41,11 @@ export default function Controls({ canUndo, onUndo, onDelete, onKeep, disabled }
           <Glass
             tint={colors.glass}
             border={colors.glassBorder}
-            radius={radius.circle}
+            radius={28}
             intensity={blur.panel}
-            style={[styles.btn, styles.undo, pressed && styles.pressed]}
+            style={[styles.btn, pressed && styles.pressed]}
           >
-            <Feather name="corner-up-left" size={20} color={colors.text} />
-          </Glass>
-        )}
-      </Pressable>
-
-      <Pressable onPress={onDelete} disabled={disabled} hitSlop={6}>
-        {({ pressed }) => (
-          <Glass
-            tint={colors.deleteGlass}
-            border={colors.deleteGlassBorder}
-            radius={radius.circle}
-            intensity={blur.panel}
-            style={[styles.btn, styles.big, pressed && styles.pressed]}
-          >
-            <Feather name="x" size={26} color={colors.deleteText} />
+            <Feather name="corner-up-left" size={22} color={colors.text} />
           </Glass>
         )}
       </Pressable>
@@ -55,9 +55,9 @@ export default function Controls({ canUndo, onUndo, onDelete, onKeep, disabled }
           <Glass
             tint={colors.keepGlass}
             border={colors.keepGlassBorder}
-            radius={radius.circle}
+            radius={28}
             intensity={blur.panel}
-            style={[styles.btn, styles.big, pressed && styles.pressed]}
+            style={[styles.btn, pressed && styles.pressed]}
           >
             <Feather name="check" size={28} color={colors.keepText} />
           </Glass>
@@ -68,9 +68,7 @@ export default function Controls({ canUndo, onUndo, onDelete, onKeep, disabled }
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 26 },
-  btn: { alignItems: 'center', justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 18 },
+  btn: { width: 82, height: 64, alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: 0.75 },
-  undo: { width: 50, height: 50 },
-  big: { width: 66, height: 66 },
 });
