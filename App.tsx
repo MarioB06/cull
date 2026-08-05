@@ -26,6 +26,7 @@ import OnboardingScreen from './src/screens/onboarding/OnboardingScreen';
 import SwipeScreen from './src/screens/SwipeScreen';
 import QueueScreen from './src/screens/QueueScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import StatsScreen from './src/screens/StatsScreen';
 import PaywallScreen from './src/screens/PaywallScreen';
 
 export type RootStackParamList = {
@@ -33,6 +34,7 @@ export type RootStackParamList = {
   Swipe: undefined;
   Queue: undefined;
   Settings: undefined;
+  Stats: undefined;
   Paywall: { freedBytes?: number } | undefined;
 };
 
@@ -112,6 +114,11 @@ export default function App() {
                 <Stack.Screen
                   name="Settings"
                   component={SettingsScreen}
+                  options={{ presentation: 'modal' }}
+                />
+                <Stack.Screen
+                  name="Stats"
+                  component={StatsScreen}
                   options={{ presentation: 'modal' }}
                 />
                 <Stack.Screen

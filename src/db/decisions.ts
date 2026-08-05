@@ -109,6 +109,29 @@ export async function sumFreedBytesLifetime(): Promise<number> {
   return row?.s ?? 0;
 }
 
+/**
+ * Freigegebene Bytes je Woche für die letzten `weeks` Wochen, älteste zuerst
+ * (für die Verlaufs-Sparkline in der Statistik).
+ */
+export async function getWeeklyFreedBytes(weeks = 8): Promise<number[]> {
+  const db = await getDb();
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const since = now - weeks * weekMs;
+  const rows = await db.getAllAsync<{ decided_at: number; file_size: number | null }>(
+    `SELECT decided_at, file_size FROM decisions
+     WHERE decision = 'deleted' AND decided_at >= ? AND file_size IS NOT NULL`,
+    [since],
+  );
+  const buckets = new Array<number>(weeks).fill(0);
+  for (const r of rows) {
+    const age = now - r.decided_at;
+    const idx = weeks - 1 - Math.floor(age / weekMs);
+    if (idx >= 0 && idx < weeks) buckets[idx] += r.file_size ?? 0;
+  }
+  return buckets;
+}
+
 /** Alle Entscheidungen löschen (Verlauf zurücksetzen). */
 export async function resetAllDecisions(): Promise<void> {
   const db = await getDb();

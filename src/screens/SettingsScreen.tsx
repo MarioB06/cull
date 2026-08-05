@@ -20,8 +20,6 @@ import { useStore } from '../state/store';
 import { usePurchasesStore } from '../state/purchases';
 import { listAlbums, type AlbumInfo } from '../media';
 import type { SortOrder } from '../db/settings';
-import { sumFreedBytesLifetime } from '../db/decisions';
-import { formatSize } from '../utils/format';
 import Screen from '../components/Screen';
 import { Glass } from '../components/Glass';
 
@@ -56,14 +54,13 @@ export default function SettingsScreen() {
     Alert.alert('Smart-Filter', 'Screenshots, grosse Dateien und Duplikate — kommt bald.');
   }, [isPro, openPaywall]);
 
-  const onStats = useCallback(async () => {
+  const onStats = useCallback(() => {
     if (!isPro) {
       openPaywall();
       return;
     }
-    const freed = await sumFreedBytesLifetime();
-    Alert.alert('Freigegebener Speicher', `${formatSize(freed)} insgesamt freigegeben.`);
-  }, [isPro, openPaywall]);
+    nav.navigate('Stats');
+  }, [isPro, openPaywall, nav]);
 
   useEffect(() => {
     if (showAlbums && albums === null) {
