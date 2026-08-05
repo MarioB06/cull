@@ -13,7 +13,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.mariobozic.cull",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Cull braucht Zugriff auf deine Fotos, um sie hier durchzugehen und auszumisten. Es verlässt nichts dein Gerät.",
+        "NSPhotoLibraryUsageDescription": "Cull braucht Zugriff auf deine Fotos, um sie hier durchzugehen und aufzuräumen. Es verlässt nichts dein Gerät.",
         "NSPhotoLibraryAddUsageDescription": "Cull braucht Zugriff auf deine Fotomediathek, um markierte Fotos zu entfernen. Es verlässt nichts dein Gerät.",
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -41,7 +41,7 @@
       [
         "expo-media-library",
         {
-          "photosPermission": "Cull braucht Zugriff auf deine Fotos, um sie hier durchzugehen und auszumisten. Es verlässt nichts dein Gerät.",
+          "photosPermission": "Cull braucht Zugriff auf deine Fotos, um sie hier durchzugehen und aufzuräumen. Es verlässt nichts dein Gerät.",
           "savePhotosPermission": "Cull braucht Zugriff auf deine Fotomediathek, um markierte Fotos zu entfernen.",
           "isAccessMediaLocationEnabled": true
         }

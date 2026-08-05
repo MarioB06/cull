@@ -40,7 +40,7 @@ export default function PermissionGate({ children }: { children: React.ReactNode
             </View>
             <Text style={styles.title}>{APP_NAME}</Text>
             <Text style={styles.text}>
-              {APP_NAME} geht deine Foto-Galerie mit dir durch, damit du sie schnell ausmisten kannst.
+              {APP_NAME} geht deine Foto-Galerie mit dir durch, damit du sie schnell aufräumen kannst.
               Alles passiert lokal — es verlässt nichts dein Gerät.
             </Text>
             <Pressable onPress={requestPermission}>

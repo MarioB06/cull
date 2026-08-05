@@ -17,7 +17,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 type PaywallRoute = RouteProp<RootStackParamList, 'Paywall'>;
 
 const FEATURES = [
-  'Unbegrenzt ausmisten',
+  'Unbegrenzt aufräumen',
   'Album für Album',
   'Videos einbeziehen',
   'Smart-Filter: Screenshots, grosse Dateien, Duplikate',

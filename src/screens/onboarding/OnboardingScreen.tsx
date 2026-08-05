@@ -108,7 +108,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
           contentFit="contain"
         />
         <Text style={styles.wordmark}>{APP_NAME.toLowerCase()}</Text>
-        <Text style={styles.subline}>Deine Galerie, ausgemistet. Ein Foto, ein Wisch.</Text>
+        <Text style={styles.subline}>Deine Galerie, aufgeräumt. Ein Foto, ein Wisch.</Text>
       </View>
       <View style={styles.bottom}>
         <Dots count={3} active={0} />
