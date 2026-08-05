@@ -53,9 +53,9 @@ export const font = {
   sansMed: 'Archivo_500Medium',
   sansSemi: 'Archivo_600SemiBold',
   sansBold: 'Archivo_700Bold',
-  mono: 'IBMPlexMono_400Regular',
-  monoMed: 'IBMPlexMono_500Medium',
-  monoSemi: 'IBMPlexMono_600SemiBold',
+  mono: 'DMMono_400Regular',
+  monoMed: 'DMMono_500Medium',
+  monoSemi: 'DMMono_500Medium',
 } as const;
 
 // Warmer Ambiente-Verlauf für Screens ohne Foto (Onboarding, Paywall).

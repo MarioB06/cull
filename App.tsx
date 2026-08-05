@@ -14,10 +14,9 @@ import {
   Archivo_700Bold,
 } from '@expo-google-fonts/archivo';
 import {
-  IBMPlexMono_400Regular,
-  IBMPlexMono_500Medium,
-  IBMPlexMono_600SemiBold,
-} from '@expo-google-fonts/ibm-plex-mono';
+  DMMono_400Regular,
+  DMMono_500Medium,
+} from '@expo-google-fonts/dm-mono';
 
 import { colors } from './src/theme';
 import { StoreProvider } from './src/state/store';
@@ -57,9 +56,8 @@ export default function App() {
     Archivo_500Medium,
     Archivo_600SemiBold,
     Archivo_700Bold,
-    IBMPlexMono_400Regular,
-    IBMPlexMono_500Medium,
-    IBMPlexMono_600SemiBold,
+    DMMono_400Regular,
+    DMMono_500Medium,
   });
 
   const [onboardingDone, setOnboardingDone] = React.useState<boolean | null>(null);
