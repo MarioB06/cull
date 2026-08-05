@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Linking, AppState, type AppStateStatus } from 'react-native';
+import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -97,19 +98,15 @@ function GlassCta({
   );
 }
 
-function CMark() {
-  return (
-    <Glass tint={colors.glass} border={colors.glassBorder} radius={40} style={styles.mark}>
-      <Text style={styles.markText}>C</Text>
-    </Glass>
-  );
-}
-
 function WelcomeStep({ onNext }: { onNext: () => void }) {
   return (
     <View style={styles.step}>
       <View style={styles.center}>
-        <CMark />
+        <Image
+          source={require('../../../assets/mascot/mascot-wave.png')}
+          style={styles.mascot}
+          contentFit="contain"
+        />
         <Text style={styles.wordmark}>{APP_NAME.toLowerCase()}</Text>
         <Text style={styles.subline}>Deine Galerie, ausgemistet. Ein Foto, ein Wisch.</Text>
       </View>
@@ -205,14 +202,11 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 12 },
   bottom: { paddingBottom: 18, gap: 18 },
 
-  mark: {
-    width: 80,
-    height: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
+  mascot: {
+    width: 200,
+    height: 200,
     marginBottom: 4,
   },
-  markText: { fontFamily: font.monoSemi, fontSize: 32, color: colors.text },
   wordmark: { fontFamily: font.monoMed, fontSize: 20, letterSpacing: 1, color: colors.text },
   subline: {
     fontFamily: font.sans,

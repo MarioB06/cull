@@ -225,6 +225,13 @@ function Content({ store, cardRef, onKeep, onDelete, onUndo, openQueue, openSett
     <Screen edges={['top', 'bottom']}>
       <LimitedBanner />
 
+      <Image
+        source={require('../../assets/mascot/mascot-rest.png')}
+        style={styles.mascotRest}
+        pointerEvents="none"
+        contentFit="contain"
+      />
+
       {/* Chrome oben — eigene Zeile, überlappt die Karte nicht. */}
       <View style={styles.topBar}>
         <Glass style={styles.progressPanel}>
@@ -350,6 +357,15 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 14,
     marginBottom: 14,
+  },
+  mascotRest: {
+    position: 'absolute',
+    left: 10,
+    bottom: 104,
+    width: 84,
+    height: 84,
+    opacity: 0.9,
+    zIndex: 1,
   },
 
   topBar: {
