@@ -65,6 +65,15 @@ export function formatFreedSize(bytesList: Array<number | null | undefined>): st
   return formatSize(total);
 }
 
+/** Videolänge im Mockup-Stil: "1:05", "0:12". */
+export function formatDuration(seconds: number | null | undefined): string {
+  if (seconds == null || !isFinite(seconds) || seconds < 0) return '';
+  const total = Math.round(seconds);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 /** Dateiname aus einem Pfad/URI extrahieren (für Frame-Nummer). */
 export function fileNameFromUri(uri: string | null | undefined, fallback: string): string {
   if (!uri) return fallback;

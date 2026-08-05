@@ -2,6 +2,7 @@
 // expo-file-system liegt die klassische (getInfoAsync) API unter /legacy.
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system/legacy';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 import type { SortOrder } from '../db/settings';
 
 export type { Asset } from 'expo-media-library';
@@ -106,6 +107,8 @@ export interface AssetDetails {
   fileSize: number | null;
   isFavorite: boolean;
   filename: string;
+  /** Nur für Videos gesetzt: Standbild (erstes Frame) als Ersatz für die rohe Videodatei. */
+  posterUri: string | null;
 }
 
 /**
@@ -116,6 +119,7 @@ export async function getAssetDetails(asset: MediaLibrary.Asset): Promise<AssetD
   let localUri: string | null = asset.uri ?? null;
   let isFavorite = false;
   let fileSize: number | null = null;
+  let posterUri: string | null = null;
 
   try {
     const info = await MediaLibrary.getAssetInfoAsync(asset);
@@ -127,12 +131,24 @@ export async function getAssetDetails(asset: MediaLibrary.Asset): Promise<AssetD
 
   fileSize = await getFileSize(localUri);
 
+  // expo-image kann Videodateien nicht als Bild dekodieren (schwarzer Bildschirm) —
+  // deshalb für Videos ein Standbild erzeugen und das statt der Rohdatei anzeigen.
+  if (asset.mediaType === 'video' && localUri) {
+    try {
+      const thumb = await VideoThumbnails.getThumbnailAsync(localUri, { time: 0 });
+      posterUri = thumb.uri;
+    } catch {
+      // Manche Codecs/DRM-Videos liefern kein Thumbnail — Karte zeigt dann den Loader.
+    }
+  }
+
   return {
     id: asset.id,
     localUri,
     fileSize,
     isFavorite,
     filename: asset.filename ?? asset.id,
+    posterUri,
   };
 }
 

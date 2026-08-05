@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image as RNImage, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Feather } from '@expo/vector-icons';
 import Animated, { useAnimatedStyle, interpolate, Extrapolation, type SharedValue } from 'react-native-reanimated';
 import { Glass } from './Glass';
 import { colors, font, radius, blur, shadowCard } from '../theme';
 import { STAMP_FULL_AT } from '../constants';
 import type { Asset, AssetDetails } from '../media';
-import { formatDate, formatSize, fileNameFromUri } from '../utils/format';
+import { formatDate, formatSize, formatDuration, fileNameFromUri } from '../utils/format';
 
 const grain = require('../../assets/grain.png');
 
@@ -20,25 +21,39 @@ interface Props {
 
 function PhotoCardBase({ asset, details, translateX }: Props) {
   const [loaded, setLoaded] = useState(false);
-  const uri = details?.localUri ?? asset.uri;
+  const isVideo = asset.mediaType === 'video';
+  // expo-image kann Videodateien nicht dekodieren — für Videos immer das
+  // generierte Standbild zeigen, nie die rohe Videodatei (sonst schwarzer Screen).
+  const displayUri = isVideo ? (details?.posterUri ?? null) : (details?.localUri ?? asset.uri);
   const filename = details?.filename ?? fileNameFromUri(asset.uri, asset.filename ?? asset.id);
   const date = formatDate(asset.creationTime);
   const size = formatSize(details?.fileSize);
+  const duration = isVideo ? formatDuration(asset.duration) : '';
 
   return (
     <View style={styles.card}>
-      <Image
-        style={StyleSheet.absoluteFill}
-        source={{ uri }}
-        contentFit="cover"
-        transition={120}
-        onLoadEnd={() => setLoaded(true)}
-        recyclingKey={asset.id}
-      />
+      {displayUri && (
+        <Image
+          style={StyleSheet.absoluteFill}
+          source={{ uri: displayUri }}
+          contentFit="cover"
+          transition={120}
+          onLoadEnd={() => setLoaded(true)}
+          recyclingKey={asset.id}
+        />
+      )}
 
-      {!loaded && (
+      {(!loaded || !displayUri) && (
         <View style={styles.imgLoader}>
           <ActivityIndicator color={colors.textFaint} />
+        </View>
+      )}
+
+      {isVideo && loaded && displayUri && (
+        <View style={styles.playBadge} pointerEvents="none">
+          <Glass tint={colors.scrimChip} border={colors.scrimChipBorder} radius={radius.circle} intensity={blur.light} style={styles.playBadgeInner}>
+            <Feather name="play" size={18} color={colors.text} />
+          </Glass>
         </View>
       )}
 
@@ -66,6 +81,7 @@ function PhotoCardBase({ asset, details, translateX }: Props) {
       <View style={styles.chips} pointerEvents="none">
         <Chip text={date} />
         <Chip text={size} />
+        {!!duration && <Chip text={duration} />}
       </View>
 
       {/* Stamps nur auf der aktiven Karte. */}
@@ -121,6 +137,22 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  playBadge: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playBadgeInner: {
+    width: 56,
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 3, // optisch zentrieren, Play-Dreieck wirkt sonst nach links versetzt
   },
   grain: {
     position: 'absolute',
