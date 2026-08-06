@@ -172,7 +172,11 @@ function PlayBadge({ icon, onPress }: { icon: 'play' | 'pause'; onPress?: () => 
         border={colors.scrimChipBorder}
         radius={radius.circle}
         intensity={blur.light}
-        style={[styles.playBadgeInner, icon === 'play' && styles.playBadgeIconNudge]}
+        style={[
+          styles.playBadgeInner,
+          icon === 'play' && styles.playBadgeIconNudge,
+          icon === 'pause' && styles.playBadgePauseFade,
+        ]}
       >
         <Feather name={icon} size={18} color={colors.text} />
       </Glass>
@@ -245,6 +249,11 @@ const styles = StyleSheet.create({
   },
   playBadgeIconNudge: {
     paddingLeft: 3, // optisch zentrieren, Play-Dreieck wirkt sonst nach links versetzt
+  },
+  playBadgePauseFade: {
+    // Liegt auf dem laufenden Video (nicht auf einem stillstehenden Poster wie beim
+    // Play-Button) — dezenter halten, damit es das Bild weniger stört.
+    opacity: 0.55,
   },
   grain: {
     position: 'absolute',
