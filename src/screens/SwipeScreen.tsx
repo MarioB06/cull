@@ -19,6 +19,7 @@ import { PREFETCH_COUNT } from '../constants';
 import { useStore } from '../state/store';
 import { setHapticsEnabled, hapticCommit, hapticSelection } from '../utils/haptics';
 import { getCoachShown, setCoachShown } from '../db/flags';
+import { presentLimitedPicker } from '../media';
 import Screen from '../components/Screen';
 import AmbientScreen from '../components/AmbientScreen';
 import { Glass } from '../components/Glass';
@@ -168,14 +169,45 @@ function Content({ store, cardRef, onKeep, onDelete, onUndo, openQueue, openSett
   }
 
   if (totalCount === 0) {
+    // "limited" + 0 Fotos heisst meist: beim Berechtigungsdialog "Fotos auswählen…" gewählt,
+    // dann aber nichts ausgewählt/abgebrochen — das ist keine leere Mediathek, sondern eine
+    // leere Freigabe. Eigene Meldung + direkter Weg zurück zum Auswahl-Dialog statt der
+    // generischen (und in diesem Fall irreführenden) "keine Fotos"-Meldung.
+    const limitedEmpty = state.permission?.state === 'limited';
+    // recheckPermission lädt nur neu, wenn sich der Status ändert — bleibt "limited" davor
+    // und danach (nur die Auswahl wächst), müssen wir hier selbst neu laden.
+    const pickMorePhotos = async () => {
+      await presentLimitedPicker();
+      await store.reloadGallery();
+    };
     return (
       <AmbientScreen>
         <SettingsCorner onPress={openSettings} />
         <View style={styles.center}>
           <Glass style={styles.statePanel}>
             <Feather name="image" size={32} color={colors.textFaint} />
-            <Text style={styles.bigState}>KEINE FOTOS</Text>
-            <Text style={styles.subState}>In deiner Mediathek gibt es nichts zum Durchgehen.</Text>
+            <Text style={styles.bigState}>
+              {limitedEmpty ? 'KEINE FOTOS AUSGEWÄHLT' : 'KEINE FOTOS'}
+            </Text>
+            <Text style={styles.subState}>
+              {limitedEmpty
+                ? 'Du hast eingeschränkten Zugriff erlaubt, aber keine Fotos freigegeben.'
+                : 'In deiner Mediathek gibt es nichts zum Durchgehen.'}
+            </Text>
+            {limitedEmpty && (
+              <Pressable onPress={pickMorePhotos}>
+                {({ pressed }) => (
+                  <Glass
+                    tint={colors.glassStrong}
+                    border={colors.glassBorderStrong}
+                    style={[styles.cta, pressed && styles.ctaPressed]}
+                  >
+                    <Feather name="image" size={16} color={colors.text} />
+                    <Text style={[styles.ctaText, styles.ctaTextNeutral]}>Fotos auswählen</Text>
+                  </Glass>
+                )}
+              </Pressable>
+            )}
           </Glass>
         </View>
       </AmbientScreen>
@@ -345,6 +377,7 @@ const styles = StyleSheet.create({
   },
   ctaPressed: { opacity: 0.8 },
   ctaText: { fontFamily: font.sansSemi, fontSize: 15, color: colors.deleteText },
+  ctaTextNeutral: { color: colors.text },
 
   cardArea: {
     flex: 1,
