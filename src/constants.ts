@@ -38,8 +38,8 @@ export const REVENUECAT_API_KEY_IOS = 'appl_tHtXqUvoWmIeguxcJMExMFuckXE';
 export const REVENUECAT_API_KEY_ANDROID = '';
 
 // Rechtstexte für die Paywall (App-Store-Pflicht). Siehe SETUP.md.
-export const TERMS_URL = '';
-export const PRIVACY_URL = '';
+export const TERMS_URL = 'https://cull.mbozic.dev/nutzungsbedingungen';
+export const PRIVACY_URL = 'https://cull.mbozic.dev/datenschutz';
 
 // --- Smart-Filter (Pro, iOS) ---
 
