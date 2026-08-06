@@ -15,15 +15,27 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '../../App';
 import { colors, font, radius, spacing } from '../theme';
-import { APP_NAME } from '../constants';
+import { APP_NAME, LARGE_FILE_THRESHOLD_BYTES } from '../constants';
 import { useStore } from '../state/store';
 import { usePurchasesStore } from '../state/purchases';
 import { listAlbums, type AlbumInfo } from '../media';
-import type { SortOrder } from '../db/settings';
+import type { SortOrder, SmartFilter } from '../db/settings';
+import { formatSize } from '../utils/format';
 import Screen from '../components/Screen';
 import { Glass } from '../components/Glass';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+const SMART_FILTER_OPTIONS: { value: SmartFilter; label: string; hint: string }[] = [
+  { value: 'none', label: 'Aus', hint: 'Alle Fotos in normaler Reihenfolge' },
+  { value: 'screenshots', label: 'Nur Screenshots', hint: 'Zeigt ausschliesslich Screenshots' },
+  {
+    value: 'large',
+    label: 'Grosse Dateien',
+    hint: `Ab ${formatSize(LARGE_FILE_THRESHOLD_BYTES)} pro Foto/Video`,
+  },
+  { value: 'duplicates', label: 'Duplikate', hint: 'Ähnliche Serienbilder direkt hintereinander' },
+];
 
 export default function SettingsScreen() {
   const nav = useNavigation<Nav>();
@@ -32,6 +44,7 @@ export default function SettingsScreen() {
   const s = state.settings;
   const [albums, setAlbums] = useState<AlbumInfo[] | null>(null);
   const [showAlbums, setShowAlbums] = useState(false);
+  const [showSmartFilter, setShowSmartFilter] = useState(false);
 
   const openPaywall = useCallback(() => nav.navigate('Paywall', {}), [nav]);
 
@@ -46,13 +59,21 @@ export default function SettingsScreen() {
     [isPro, openPaywall, updateSetting],
   );
 
-  const onSmartFilter = useCallback(() => {
+  const onSmartFilterRow = useCallback(() => {
     if (!isPro) {
       openPaywall();
       return;
     }
-    Alert.alert('Smart-Filter', 'Screenshots, grosse Dateien und Duplikate — kommt bald.');
+    setShowSmartFilter((v) => !v);
   }, [isPro, openPaywall]);
+
+  const pickSmartFilter = useCallback(
+    (value: SmartFilter) => {
+      setShowSmartFilter(false);
+      void updateSetting('smartFilter', value);
+    },
+    [updateSetting],
+  );
 
   const onStats = useCallback(() => {
     if (!isPro) {
@@ -209,17 +230,40 @@ export default function SettingsScreen() {
 
         {/* Smart-Filter & Statistik (Pro) */}
         <Section label="SMART">
-          <Pressable style={styles.row} onPress={onSmartFilter}>
+          <Pressable style={styles.row} onPress={onSmartFilterRow}>
             <View style={styles.rowTextWrap}>
               <Text style={styles.rowLabel}>Smart-Filter</Text>
-              <Text style={styles.rowHint}>Screenshots · grosse Dateien · Duplikate</Text>
+              <Text style={styles.rowHint}>
+                {isPro
+                  ? (SMART_FILTER_OPTIONS.find((o) => o.value === s.smartFilter)?.label ?? 'Aus')
+                  : 'Screenshots · grosse Dateien · Duplikate'}
+              </Text>
             </View>
             {isPro ? (
-              <Feather name="chevron-right" size={18} color={colors.textFaint} />
+              <Feather
+                name={showSmartFilter ? 'chevron-up' : 'chevron-down'}
+                size={18}
+                color={colors.textFaint}
+              />
             ) : (
               <ProBadge />
             )}
           </Pressable>
+
+          {isPro && showSmartFilter && (
+            <View style={styles.albumList}>
+              {SMART_FILTER_OPTIONS.map((o) => (
+                <FilterOption
+                  key={o.value}
+                  title={o.label}
+                  hint={o.hint}
+                  selected={s.smartFilter === o.value}
+                  onPress={() => pickSmartFilter(o.value)}
+                />
+              ))}
+            </View>
+          )}
+
           <Pressable style={styles.row} onPress={onStats}>
             <Text style={styles.rowLabel}>Freigegebener Speicher</Text>
             {isPro ? (
@@ -320,6 +364,30 @@ function Segmented<T extends string>({
         );
       })}
     </View>
+  );
+}
+
+function FilterOption({
+  title,
+  hint,
+  selected,
+  onPress,
+}: {
+  title: string;
+  hint: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable style={styles.albumOption} onPress={onPress}>
+      <View style={styles.rowTextWrap}>
+        <Text style={[styles.albumTitle, selected && styles.albumTitleActive]} numberOfLines={1}>
+          {title}
+        </Text>
+        <Text style={styles.filterOptionHint}>{hint}</Text>
+      </View>
+      {selected && <Feather name="check" size={16} color={colors.accent} />}
+    </Pressable>
   );
 }
 
@@ -435,6 +503,7 @@ const styles = StyleSheet.create({
   },
   albumTitle: { flex: 1, fontFamily: font.sans, fontSize: 13, color: colors.textDim },
   albumTitleActive: { color: colors.text, fontFamily: font.sansSemi },
+  filterOptionHint: { fontFamily: font.mono, fontSize: 10, color: colors.textFaint, marginTop: 2 },
 
   note: {
     flexDirection: 'row',
