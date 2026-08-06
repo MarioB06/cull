@@ -101,6 +101,44 @@ export async function countAssetsInScope(opts: {
   return result.totalCount;
 }
 
+/**
+ * Bricht das Warten auf `promise` nach `ms` ab. Die native Operation läuft im
+ * Hintergrund weiter (kein Cancel-API vorhanden) — wir geben nur nicht mehr auf sie acht,
+ * damit ein hängender Call (z. B. iCloud-Download, exotischer Codec) die Karte nicht
+ * für immer im Loading-Zustand hält.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), ms);
+    promise.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
+
+/**
+ * Serialisiert eine teure Operation app-weit auf höchstens eine gleichzeitig laufende.
+ * Video-Thumbnail-Erzeugung ist native Decode-Arbeit — beim Prefetch (aktive Karte + 3
+ * vorausgeladene, siehe PREFETCH_COUNT) liefen sonst bis zu 4 Decodes gleichzeitig,
+ * was sich gegenseitig so ausbremst, dass reihenweise Anfragen den Timeout reißen.
+ */
+let thumbnailQueue: Promise<unknown> = Promise.resolve();
+function enqueueThumbnail<T>(fn: () => Promise<T>): Promise<T> {
+  const run = thumbnailQueue.then(fn, fn);
+  thumbnailQueue = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
 export interface AssetDetails {
   id: string;
   localUri: string | null;
@@ -122,24 +160,45 @@ export async function getAssetDetails(asset: MediaLibrary.Asset): Promise<AssetD
   let posterUri: string | null = null;
 
   try {
-    const info = await MediaLibrary.getAssetInfoAsync(asset);
+    // iCloud-Videos ohne lokale Kopie können hier sehr lange hängen (Download läuft) —
+    // nach 8s aufgeben statt die Karte für immer im Loading-Zustand zu lassen.
+    const info = await withTimeout(MediaLibrary.getAssetInfoAsync(asset), 8000);
     localUri = info.localUri ?? asset.uri ?? null;
     isFavorite = !!info.isFavorite;
   } catch {
-    // iCloud-Asset evtl. noch nicht lokal — uri als Fallback verwenden.
+    // iCloud-Asset evtl. noch nicht lokal, oder Timeout — uri als Fallback verwenden.
   }
 
   fileSize = await getFileSize(localUri);
 
   // expo-image kann Videodateien nicht als Bild dekodieren (schwarzer Bildschirm) —
   // deshalb für Videos ein Standbild erzeugen und das statt der Rohdatei anzeigen.
+  //
+  // time: 0 mit Nulltoleranz scheitert bei vielen re-encodeten .mp4 (WhatsApp, Downloads
+  // etc.) — deren erstes Sample ist oft kein valides Keyframe (AVFoundationError -11832).
+  // Kamera-.mov klappt bei 0 fast immer. Zusätzlich haben viele (v. a. längere) Videos einen
+  // schwarzen Leader/Fade-in in den ersten Frames — technisch ein gültiges Thumbnail, aber
+  // optisch nutzlos. Deshalb bei längeren Videos 1s reingehen (überspringt die meisten
+  // Fade-ins), bei kürzeren mit kleinerem Offset, immer mit 0 als letztem Rückfall.
   if (asset.mediaType === 'video' && localUri) {
-    try {
-      const thumb = await VideoThumbnails.getThumbnailAsync(localUri, { time: 0 });
-      posterUri = thumb.uri;
-    } catch {
-      // Manche Codecs/DRM-Videos liefern kein Thumbnail — Karte zeigt dann den Loader.
-    }
+    const durationMs = Math.round((asset.duration ?? 0) * 1000);
+    const attempts =
+      durationMs > 1200 ? [1000, 0] : durationMs > 200 ? [100, 0] : [0];
+    const uri = localUri;
+    posterUri = await enqueueThumbnail(async () => {
+      for (const time of attempts) {
+        try {
+          // Timeout pro Versuch — manche Videos lassen die native Decode-Operation
+          // nie fertig werden (nie resolve/reject), ohne das würde die Karte ewig laden.
+          const thumb = await withTimeout(VideoThumbnails.getThumbnailAsync(uri, { time }), 5000);
+          return thumb.uri;
+        } catch {
+          // nächsten Versuch probieren; wenn alle scheitern, bleibt posterUri null
+          // und die Karte zeigt einen Fallback-Platzhalter statt endlos zu laden.
+        }
+      }
+      return null;
+    });
   }
 
   return {

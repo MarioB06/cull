@@ -47,7 +47,8 @@
         }
       ],
       "expo-sqlite",
-      "expo-font"
+      "expo-font",
+      "expo-video"
     ],
     "web": {
       "favicon": "./assets/favicon.png"

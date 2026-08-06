@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image as RNImage, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image as RNImage, ActivityIndicator, Pressable } from 'react-native';
 import { Image } from 'expo-image';
+import { useEvent } from 'expo';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import Animated, { useAnimatedStyle, interpolate, Extrapolation, type SharedValue } from 'react-native-reanimated';
@@ -15,16 +17,57 @@ const grain = require('../../assets/grain.png');
 interface Props {
   asset: Asset;
   details?: AssetDetails;
-  /** Nur für die aktive Karte: treibt Stamp-Opacity. */
+  /** Nur für die aktive Karte: treibt Stamp-Opacity + erlaubt Video-Wiedergabe. */
   translateX?: SharedValue<number>;
 }
 
 function PhotoCardBase({ asset, details, translateX }: Props) {
   const [loaded, setLoaded] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const isVideo = asset.mediaType === 'video';
+  const isActive = !!translateX;
+
   // expo-image kann Videodateien nicht dekodieren — für Videos immer das
   // generierte Standbild zeigen, nie die rohe Videodatei (sonst schwarzer Screen).
-  const displayUri = isVideo ? (details?.posterUri ?? null) : (details?.localUri ?? asset.uri);
+  const posterUri = isVideo ? (details?.posterUri ?? null) : null;
+  const displayUri = isVideo ? posterUri : (details?.localUri ?? asset.uri);
+  // Thumbnail-Erzeugung ist final gescheitert (z. B. exotischer Codec) — kein endloser Loader.
+  const posterFailed = isVideo && !!details && !posterUri;
+
+  // Player wird immer erzeugt (Hook-Regeln), spielt aber nur auf der aktiven Karte.
+  //
+  // asset.uri zuerst: auf iOS ist das eine ph://-Referenz aufs Photos-Asset, die expo-video
+  // über PHImageManager auflöst — denselben Weg, den Photos.app selbst nutzt. Manche
+  // HDR-/Sonderformat-Videos lassen sich so abspielen, obwohl die von MediaLibrary exportierte
+  // lokale Kopie (localUri) am AVPlayer scheitert. localUri bleibt Fallback (u. a. Android,
+  // wo asset.uri ohnehin schon file:// ist).
+  const videoSource = isVideo ? (asset.uri ?? details?.localUri ?? null) : null;
+  const player = useVideoPlayer(videoSource, (p) => {
+    p.loop = true;
+  });
+  // Manche Videos laden fehlerfrei ein Standbild, scheitern aber erst beim eigentlichen
+  // Decodieren (AVPlayer/ExoPlayer-Fehler) — dann bliebe die VideoView sonst einfach
+  // schwarz stehen, ohne dass wir das je erfahren. Also den echten Player-Status verfolgen.
+  const { status: playerStatus } = useEvent(player, 'statusChange', { status: player.status });
+  const playbackFailed = isVideo && playerStatus === 'error';
+
+  useEffect(() => {
+    if (playbackFailed) setPlaying(false);
+  }, [playbackFailed]);
+
+  const canPlay = isVideo && isActive && !!videoSource && !playbackFailed;
+
+  const togglePlay = () => {
+    if (!canPlay) return;
+    if (playing) {
+      player.pause();
+      setPlaying(false);
+    } else {
+      player.play();
+      setPlaying(true);
+    }
+  };
+
   const filename = details?.filename ?? fileNameFromUri(asset.uri, asset.filename ?? asset.id);
   const date = formatDate(asset.creationTime);
   const size = formatSize(details?.fileSize);
@@ -32,33 +75,63 @@ function PhotoCardBase({ asset, details, translateX }: Props) {
 
   return (
     <View style={styles.card}>
-      {displayUri && (
-        <Image
+      {playing && canPlay ? (
+        <VideoView
           style={StyleSheet.absoluteFill}
-          source={{ uri: displayUri }}
+          player={player}
           contentFit="cover"
-          transition={120}
-          onLoadEnd={() => setLoaded(true)}
-          recyclingKey={asset.id}
+          nativeControls={false}
         />
+      ) : (
+        displayUri && (
+          <Image
+            style={StyleSheet.absoluteFill}
+            source={{ uri: displayUri }}
+            contentFit="cover"
+            transition={120}
+            onLoadEnd={() => setLoaded(true)}
+            recyclingKey={asset.id}
+          />
+        )
       )}
 
-      {(!loaded || !displayUri) && (
+      {!playing && !posterFailed && (!loaded || !displayUri) && (
         <View style={styles.imgLoader}>
           <ActivityIndicator color={colors.textFaint} />
         </View>
       )}
 
-      {isVideo && loaded && displayUri && (
-        <View style={styles.playBadge} pointerEvents="none">
-          <Glass tint={colors.scrimChip} border={colors.scrimChipBorder} radius={radius.circle} intensity={blur.light} style={styles.playBadgeInner}>
-            <Feather name="play" size={18} color={colors.text} />
-          </Glass>
+      {!playing && posterFailed && !playbackFailed && (
+        <View style={styles.imgLoader} pointerEvents="none">
+          <Feather name="film" size={28} color={colors.textFaint} />
+        </View>
+      )}
+
+      {/* Player lädt noch (nach Tap auf Play, bevor das erste Bild da ist). */}
+      {playing && canPlay && playerStatus === 'loading' && (
+        <View style={styles.imgLoader} pointerEvents="none">
+          <ActivityIndicator color={colors.textFaint} />
+        </View>
+      )}
+
+      {isVideo && !playing && !playbackFailed && (loaded || posterFailed) && (
+        <PlayBadge icon="play" onPress={canPlay ? togglePlay : undefined} />
+      )}
+
+      {isVideo && playing && canPlay && <PlayBadge icon="pause" onPress={togglePlay} />}
+
+      {/* Decodierung ist am eigentlichen Player gescheitert (nicht nur am Thumbnail) —
+          eindeutig als kaputt markieren statt einen toten Play-Button zu zeigen. */}
+      {isVideo && playbackFailed && (
+        <View style={styles.imgLoader} pointerEvents="none">
+          <Feather name="alert-triangle" size={26} color={colors.textFaint} />
         </View>
       )}
 
       {/* Film-Grain-Overlay (gekacheltes Rauschen, soft-light-artig). */}
-      <RNImage source={grain} style={styles.grain} resizeMode="repeat" />
+      <View style={styles.grain} pointerEvents="none">
+        <RNImage source={grain} style={styles.grainImage} resizeMode="repeat" />
+      </View>
 
       {/* Verlauf unten für Lesbarkeit der Chips. */}
       <LinearGradient
@@ -87,6 +160,23 @@ function PhotoCardBase({ asset, details, translateX }: Props) {
       {/* Stamps nur auf der aktiven Karte. */}
       {translateX && <Stamps translateX={translateX} />}
     </View>
+  );
+}
+
+/** Play/Pause-Badge, zentriert. Ohne `onPress` (inaktive Stack-Karte) rein dekorativ. */
+function PlayBadge({ icon, onPress }: { icon: 'play' | 'pause'; onPress?: () => void }) {
+  return (
+    <Pressable style={styles.playBadge} onPress={onPress} disabled={!onPress} hitSlop={20}>
+      <Glass
+        tint={colors.scrimChip}
+        border={colors.scrimChipBorder}
+        radius={radius.circle}
+        intensity={blur.light}
+        style={[styles.playBadgeInner, icon === 'play' && styles.playBadgeIconNudge]}
+      >
+        <Feather name={icon} size={18} color={colors.text} />
+      </Glass>
+    </Pressable>
   );
 }
 
@@ -152,12 +242,18 @@ const styles = StyleSheet.create({
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  playBadgeIconNudge: {
     paddingLeft: 3, // optisch zentrieren, Play-Dreieck wirkt sonst nach links versetzt
   },
   grain: {
     position: 'absolute',
     top: 0,
     left: 0,
+    width: '100%',
+    height: '100%',
+  },
+  grainImage: {
     width: '100%',
     height: '100%',
     // Dezent halten: ohne echten Blend würde 0.5 das Foto zukleistern.
