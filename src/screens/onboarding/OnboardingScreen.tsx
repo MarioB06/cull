@@ -12,6 +12,7 @@ import { APP_NAME } from '../../constants';
 import { useStore } from '../../state/store';
 import { checkPermission } from '../../media';
 import { setOnboardingCompleted } from '../../db/flags';
+import { track } from '../../analytics';
 import Dots from '../../components/onboarding/Dots';
 import AmbientScreen from '../../components/AmbientScreen';
 import { Glass } from '../../components/Glass';
@@ -25,7 +26,12 @@ export default function OnboardingScreen() {
   const [step, setStep] = useState<Step>(0);
   const [requesting, setRequesting] = useState(false);
 
+  useEffect(() => {
+    track({ name: 'onboarding_started' });
+  }, []);
+
   const finish = useCallback(async () => {
+    track({ name: 'onboarding_completed' });
     await setOnboardingCompleted(true);
     nav.reset({ index: 0, routes: [{ name: 'Swipe' }] });
   }, [nav]);
@@ -35,6 +41,9 @@ export default function OnboardingScreen() {
     setRequesting(true);
     try {
       const perm = await store.requestPermission();
+      if (perm.state === 'granted' || perm.state === 'limited' || perm.state === 'denied') {
+        track({ name: 'permission_result', state: perm.state, source: 'initial' });
+      }
       if (perm.state === 'granted' || perm.state === 'limited') {
         await finish();
       } else {
@@ -53,6 +62,7 @@ export default function OnboardingScreen() {
       if (s !== 'active') return;
       void checkPermission().then((perm) => {
         if (perm.state === 'granted' || perm.state === 'limited') {
+          track({ name: 'permission_result', state: perm.state, source: 'recovery' });
           void finish();
         }
       });

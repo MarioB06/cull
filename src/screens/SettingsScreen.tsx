@@ -21,6 +21,7 @@ import { usePurchasesStore } from '../state/purchases';
 import { listAlbums, type AlbumInfo } from '../media';
 import type { SortOrder, SmartFilter } from '../db/settings';
 import { formatSize } from '../utils/format';
+import type { PaywallTrigger } from '../analytics';
 import Screen from '../components/Screen';
 import { Glass } from '../components/Glass';
 
@@ -45,12 +46,15 @@ export default function SettingsScreen() {
   const [showAlbums, setShowAlbums] = useState(false);
   const [showSmartFilter, setShowSmartFilter] = useState(false);
 
-  const openPaywall = useCallback(() => nav.navigate('Paywall', {}), [nav]);
+  const openPaywall = useCallback(
+    (trigger: PaywallTrigger) => nav.navigate('Paywall', { trigger }),
+    [nav],
+  );
 
   const onToggleVideos = useCallback(
     (v: boolean) => {
       if (v && !isPro) {
-        openPaywall();
+        openPaywall('feature');
         return;
       }
       void updateSetting('includeVideos', v);
@@ -60,7 +64,7 @@ export default function SettingsScreen() {
 
   const onSmartFilterRow = useCallback(() => {
     if (!isPro) {
-      openPaywall();
+      openPaywall('feature');
       return;
     }
     setShowSmartFilter((v) => !v);
@@ -76,7 +80,7 @@ export default function SettingsScreen() {
 
   const onStats = useCallback(() => {
     if (!isPro) {
-      openPaywall();
+      openPaywall('feature');
       return;
     }
     nav.navigate('Stats');
@@ -107,7 +111,7 @@ export default function SettingsScreen() {
     (album: AlbumInfo | null) => {
       setShowAlbums(false);
       if (album && !isPro) {
-        openPaywall();
+        openPaywall('feature');
         return;
       }
       void updateSetting('albumId', album ? album.id : null);
@@ -140,7 +144,7 @@ export default function SettingsScreen() {
             </View>
           </Section>
         ) : (
-          <Pressable onPress={openPaywall}>
+          <Pressable onPress={() => openPaywall('settings')}>
             {({ pressed }) => (
               <Glass tint={colors.glassStrong} border={colors.glassBorderStrong} style={[styles.promoCard, pressed && styles.pressed]}>
                 <View style={styles.promoIcon}>

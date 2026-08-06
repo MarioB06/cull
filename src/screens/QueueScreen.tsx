@@ -28,6 +28,7 @@ import type { DecisionRow } from '../db/index';
 import { getUriById } from '../media';
 import { formatFreedSize, fileNameFromUri } from '../utils/format';
 import { hapticSelection, hapticDelete } from '../utils/haptics';
+import { track } from '../analytics';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -67,12 +68,13 @@ export default function QueueScreen() {
     // löschen (kein Off-by-one-Abschnitt mitten im Batch) — stattdessen die Paywall.
     const allowed = await canCommitDelete(rows.length, isPro);
     if (!allowed) {
-      nav.navigate('Paywall', {});
+      nav.navigate('Paywall', { trigger: 'limit' });
       return;
     }
 
-    // Für den Freed-Space-Aufhänger: war das die allererste jemals abgeschlossene Löschung?
-    const wasFirstEver = !isPro && (await countDeletedLifetime()) === 0;
+    // War das die allererste jemals abgeschlossene Löschung? Für Free zusätzlich der
+    // Freed-Space-Aufhänger als Paywall-Trigger; fürs Analytics-Event gilt das für alle.
+    const isFirstDeleteEver = (await countDeletedLifetime()) === 0;
 
     hapticDelete();
     setDeleting(true);
@@ -88,11 +90,14 @@ export default function QueueScreen() {
         // Erfolg (ggf. Teil-Erfolg). Zurück zum Swipe.
         await load();
         if (result.deletedIds.length > 0) {
+          if (isFirstDeleteEver) {
+            track({ name: 'first_delete_completed' });
+          }
           nav.goBack();
           // Value-first: den Freed-Space-Moment nur nach der allerersten Löschung als
           // Paywall-Aufhänger zeigen, nicht bei jedem Commit.
-          if (wasFirstEver) {
-            nav.navigate('Paywall', { freedBytes: result.freedBytes });
+          if (!isPro && isFirstDeleteEver) {
+            nav.navigate('Paywall', { freedBytes: result.freedBytes, trigger: 'freed_space' });
           }
         }
       }

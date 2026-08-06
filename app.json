@@ -48,7 +48,8 @@
       ],
       "expo-sqlite",
       "expo-font",
-      "expo-video"
+      "expo-video",
+      "expo-localization"
     ],
     "web": {
       "favicon": "./assets/favicon.png"

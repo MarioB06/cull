@@ -22,6 +22,7 @@ import { colors } from './src/theme';
 import { StoreProvider } from './src/state/store';
 import { PurchasesProvider } from './src/state/purchases';
 import { getOnboardingCompleted } from './src/db/flags';
+import { initAnalytics, track, type PaywallTrigger } from './src/analytics';
 import OnboardingScreen from './src/screens/onboarding/OnboardingScreen';
 import SwipeScreen from './src/screens/SwipeScreen';
 import QueueScreen from './src/screens/QueueScreen';
@@ -35,7 +36,7 @@ export type RootStackParamList = {
   Queue: undefined;
   Settings: undefined;
   Stats: undefined;
-  Paywall: { freedBytes?: number } | undefined;
+  Paywall: { freedBytes?: number; trigger: PaywallTrigger };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -63,6 +64,11 @@ export default function App() {
   });
 
   const [onboardingDone, setOnboardingDone] = React.useState<boolean | null>(null);
+
+  useEffect(() => {
+    initAnalytics();
+    track({ name: 'app_opened' });
+  }, []);
 
   useEffect(() => {
     if (fontError) {

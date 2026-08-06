@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Alert, ActivityIndicator, Linking } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
@@ -10,6 +10,7 @@ import { APP_NAME, TERMS_URL, PRIVACY_URL } from '../constants';
 import { usePurchasesStore } from '../state/purchases';
 import type { PackageId, PurchasesPackageInfo } from '../purchases/types';
 import { formatSize } from '../utils/format';
+import { track } from '../analytics';
 import AmbientScreen from '../components/AmbientScreen';
 import { Glass } from '../components/Glass';
 
@@ -32,6 +33,15 @@ export default function PaywallScreen() {
     usePurchasesStore();
   const [selected, setSelected] = useState<PackageId>('lifetime');
 
+  // Genau einmal pro tatsächlich angezeigter Paywall (nicht beim Lade- oder
+  // "bereits Pro"-Zustand).
+  const trackedShownRef = useRef(false);
+  useEffect(() => {
+    if (trackedShownRef.current || !ready || isPro) return;
+    trackedShownRef.current = true;
+    track({ name: 'paywall_shown', trigger: route.params.trigger });
+  }, [ready, isPro, route.params.trigger]);
+
   const close = useCallback(() => nav.goBack(), [nav]);
 
   const onPurchase = useCallback(async () => {
@@ -40,12 +50,15 @@ export default function PaywallScreen() {
     if (!pkg) return;
     const result = await purchase(pkg);
     if (result.success) {
+      track({ name: 'purchase_completed', package: selected });
       Alert.alert(`${APP_NAME} Pro aktiv`, 'Danke für deinen Kauf!', [
         { text: 'OK', onPress: close },
       ]);
     } else if (result.cancelled) {
       // Nutzer hat das Store-Sheet geschlossen — einfach zurück zur Paywall, kein Fehler.
+      track({ name: 'purchase_cancelled_or_failed', reason: 'cancelled' });
     } else {
+      track({ name: 'purchase_cancelled_or_failed', reason: 'failed' });
       Alert.alert('Kauf nicht möglich', 'Versuch es nochmal.');
     }
   }, [selected, offering, purchase, close]);

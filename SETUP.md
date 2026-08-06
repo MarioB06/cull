@@ -1,4 +1,4 @@
-# Setup: Cull Pro (RevenueCat)
+# Setup: Cull Pro (RevenueCat) & Analytics (PostHog)
 
 Der komplette Onboarding- und Paywall-Flow läuft bereits jetzt in Expo Go — über den Mock
 in `src/purchases/mock.ts`. Für echte Käufe fehlen noch ein paar externe Schritte, die ich
@@ -70,3 +70,28 @@ bitte vor Store-Einreichung mit echten, gehosteten Seiten befüllen.
 - `FREE_DELETE_LIMIT` (Standard 200) und `ENTITLEMENT_ID` (`pro`) in `src/constants.ts`.
 - `PURCHASES_MOCK` in `src/purchases/index.ts` auf `true` setzen, um den Mock auch in
   einem Dev-Build zu erzwingen (z. B. für Screenshots).
+
+## 7. Analytics (PostHog)
+
+Bewusst minimal gehalten: kein Autocapture, kein Session-Replay, keine automatische
+Screen-Verfolgung — nur neun explizit benannte Events (siehe `src/analytics/index.ts` für
+die vollständige, typisierte Liste: `app_opened`, `onboarding_started`,
+`onboarding_completed`, `permission_result`, `first_swipe`, `paywall_shown` inkl. Auslöser,
+`purchase_completed`, `purchase_cancelled_or_failed`, `first_delete_completed`).
+
+1. Account auf [posthog.com](https://posthog.com) anlegen, ein Projekt für Cull erstellen
+   (Region **US** oder **EU** wählen — merken für Schritt 3).
+2. **Project API Key** aus den Projekteinstellungen kopieren (beginnt mit `phc_`).
+3. Eintragen in [`src/constants.ts`](src/constants.ts):
+   ```ts
+   export const POSTHOG_API_KEY = 'phc_...';
+   export const POSTHOG_HOST = 'https://us.i.posthog.com'; // bei EU-Projekt: eu.i.posthog.com
+   ```
+   Solange `POSTHOG_API_KEY` leer ist, bleibt Analytics komplett inaktiv (kein Client wird
+   erzeugt, `track()` ist überall ein No-op) — die App baut und läuft unabhängig davon.
+4. Kein Config-Plugin/Prebuild-Schritt nötig — `posthog-react-native` funktioniert bereits
+   in Expo Go, kein Dev-Build erforderlich (anders als RevenueCat).
+5. Datenschutzerklärung ergänzen: auch komplett anonyme Produkt-Analytics muss dort erwähnt
+   und im App-Store-Privacy-Fragebogen als "Nutzungsdaten" deklariert werden. Ein zusätzlicher
+   App-Tracking-Transparency-Dialog ist **nicht** nötig, solange die Daten anonym bleiben und
+   nicht für Werbung/App-übergreifendes Tracking verwendet werden (hier der Fall).

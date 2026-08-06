@@ -20,6 +20,7 @@ import { useStore } from '../state/store';
 import { setHapticsEnabled, hapticCommit, hapticSelection } from '../utils/haptics';
 import { getCoachShown, setCoachShown } from '../db/flags';
 import { presentLimitedPicker } from '../media';
+import { track } from '../analytics';
 import Screen from '../components/Screen';
 import AmbientScreen from '../components/AmbientScreen';
 import { Glass } from '../components/Glass';
@@ -49,9 +50,15 @@ export default function SwipeScreen() {
   // First-Run-Coach: einmaliger Hinweis auf der allerersten Swipe-Karte.
   const [showCoach, setShowCoach] = React.useState(false);
   const coachHandled = useRef(false);
+  // War coach_shown beim Laden noch false? Nur dann ist dieser Swipe wirklich der allererste
+  // überhaupt (nicht nur der erste dieser Session) — für die first_swipe-Analytics.
+  const isFirstEverRef = useRef(false);
   useEffect(() => {
     void getCoachShown().then((shown) => {
-      if (!shown) setShowCoach(true);
+      if (!shown) {
+        setShowCoach(true);
+        isFirstEverRef.current = true;
+      }
     });
   }, []);
   const dismissCoach = useCallback(() => {
@@ -59,6 +66,9 @@ export default function SwipeScreen() {
     coachHandled.current = true;
     setShowCoach(false);
     void setCoachShown(true);
+    if (isFirstEverRef.current) {
+      track({ name: 'first_swipe' });
+    }
   }, []);
 
   // Haptik-Setting in den Helper spiegeln.
