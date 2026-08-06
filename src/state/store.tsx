@@ -225,6 +225,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           sortOrder: s.settings.sortOrder,
           includeVideos: s.settings.includeVideos,
           albumId: s.settings.albumId,
+          smartFilter: s.settings.smartFilter,
         });
         cursor = page.endCursor;
         hasNext = page.hasNextPage;
@@ -252,6 +253,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         Media.countAssetsInScope({
           includeVideos: settings.includeVideos,
           albumId: settings.albumId,
+          smartFilter: settings.smartFilter,
         }),
       ]);
 
@@ -268,6 +270,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           sortOrder: settings.sortOrder,
           includeVideos: settings.includeVideos,
           albumId: settings.albumId,
+          smartFilter: settings.smartFilter,
         });
         cursor = page.endCursor;
         hasNext = page.hasNextPage;
@@ -503,7 +506,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         key === 'sortOrder' ||
         key === 'includeVideos' ||
         key === 'albumId' ||
-        key === 'skipFavorites'
+        key === 'skipFavorites' ||
+        key === 'smartFilter'
       ) {
         await reloadGallery();
       }

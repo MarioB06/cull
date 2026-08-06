@@ -2,6 +2,11 @@ import { getDb } from './index';
 
 export type SortOrder = 'newest' | 'oldest';
 
+// 'large'/'duplicates' brauchen pro Asset zusätzliche Arbeit (Dateigröße auflösen bzw.
+// Nachbar-Vergleich) — siehe src/media/index.ts. 'screenshots' läuft direkt als natives
+// Query-Filter (iOS mediaSubtypes) und ist entsprechend am billigsten.
+export type SmartFilter = 'none' | 'screenshots' | 'large' | 'duplicates';
+
 export interface AppSettings {
   sortOrder: SortOrder;
   includeVideos: boolean;
@@ -9,6 +14,7 @@ export interface AppSettings {
   haptics: boolean;
   albumId: string | null; // null = alle Fotos
   albumTitle: string | null;
+  smartFilter: SmartFilter;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -18,6 +24,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   haptics: true,
   albumId: null,
   albumTitle: null,
+  smartFilter: 'none',
 };
 
 const KEYS = {
@@ -27,6 +34,7 @@ const KEYS = {
   haptics: 'haptics',
   albumId: 'album_id',
   albumTitle: 'album_title',
+  smartFilter: 'smart_filter',
 } as const;
 
 async function getRaw(): Promise<Map<string, string>> {
@@ -50,6 +58,7 @@ export async function loadSettings(): Promise<AppSettings> {
     haptics: bool(KEYS.haptics, DEFAULT_SETTINGS.haptics),
     albumId: raw.get(KEYS.albumId) ?? DEFAULT_SETTINGS.albumId,
     albumTitle: raw.get(KEYS.albumTitle) ?? DEFAULT_SETTINGS.albumTitle,
+    smartFilter: (raw.get(KEYS.smartFilter) as SmartFilter) || DEFAULT_SETTINGS.smartFilter,
   };
 }
 
@@ -84,5 +93,7 @@ export async function saveSetting<K extends keyof AppSettings>(
       return value == null ? del(KEYS.albumId) : put(KEYS.albumId, String(value));
     case 'albumTitle':
       return value == null ? del(KEYS.albumTitle) : put(KEYS.albumTitle, String(value));
+    case 'smartFilter':
+      return put(KEYS.smartFilter, String(value));
   }
 }

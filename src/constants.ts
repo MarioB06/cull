@@ -40,3 +40,12 @@ export const REVENUECAT_API_KEY_ANDROID = '';
 // Rechtstexte für die Paywall (App-Store-Pflicht). Siehe SETUP.md.
 export const TERMS_URL = '';
 export const PRIVACY_URL = '';
+
+// --- Smart-Filter (Pro, iOS) ---
+
+// Ab dieser Dateigröße gilt ein Foto/Video als "gross" für den Smart-Filter.
+export const LARGE_FILE_THRESHOLD_BYTES = 8 * 1024 * 1024; // 8 MB
+
+// Zwei Aufnahmen gelten als mögliches Duplikat, wenn sie innerhalb dieses Zeitfensters
+// entstanden sind (Serienbild-Heuristik) UND dieselbe Auflösung + denselben Medientyp haben.
+export const DUPLICATE_WINDOW_MS = 3000;

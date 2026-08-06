@@ -3,7 +3,8 @@
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as VideoThumbnails from 'expo-video-thumbnails';
-import type { SortOrder } from '../db/settings';
+import type { SortOrder, SmartFilter } from '../db/settings';
+import { LARGE_FILE_THRESHOLD_BYTES, DUPLICATE_WINDOW_MS } from '../constants';
 
 export type { Asset } from 'expo-media-library';
 
@@ -58,6 +59,70 @@ export interface FetchOptions {
   sortOrder: SortOrder;
   includeVideos: boolean;
   albumId: string | null;
+  smartFilter: SmartFilter;
+}
+
+/**
+ * Läuft `fn` über `items` mit höchstens `limit` gleichzeitig laufenden Aufrufen — schützt
+ * die native Bridge davor, z. B. 60 `getAssetInfoAsync`-Aufrufe (Smart-Filter "Grosse
+ * Dateien") auf einen Schlag loszuschicken.
+ */
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let index = 0;
+  async function worker() {
+    while (index < items.length) {
+      const i = index++;
+      results[i] = await fn(items[i]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
+/**
+ * Smart-Filter "Grosse Dateien": pro Asset Dateigrösse auflösen (wie getAssetDetails,
+ * aber ohne Poster/Favorit — hier zählt nur die Grösse) und alles unter der Schwelle
+ * verwerfen. Läuft nur auf der aktuell geladenen Seite, nicht auf der ganzen Bibliothek.
+ */
+async function filterLargeAssets(assets: MediaLibrary.Asset[]): Promise<MediaLibrary.Asset[]> {
+  const isLarge = await mapWithConcurrency(assets, 8, async (a) => {
+    try {
+      const info = await withTimeout(MediaLibrary.getAssetInfoAsync(a), 5000);
+      const size = await getFileSize(info.localUri ?? a.uri);
+      return size != null && size >= LARGE_FILE_THRESHOLD_BYTES;
+    } catch {
+      return false;
+    }
+  });
+  return assets.filter((_, i) => isLarge[i]);
+}
+
+/**
+ * Smart-Filter "Duplikate": einfache Serienbild-Heuristik auf Basis der bereits
+ * vorhandenen Metadaten (kein zusätzlicher nativer Aufruf nötig) — zwei direkt
+ * aufeinanderfolgende Aufnahmen (Liste ist nach creationTime sortiert) gelten als
+ * Duplikat-Paar, wenn sie innerhalb von DUPLICATE_WINDOW_MS, mit gleicher Auflösung und
+ * gleichem Medientyp entstanden sind. Erkennt bewusst nur angrenzende Paare pro Seite
+ * (keine Seiten-übergreifende oder inhaltliche Bildanalyse) — für den typischen
+ * "5x fast das gleiche Foto"-Fall reicht das.
+ */
+function filterDuplicateAssets(assets: MediaLibrary.Asset[]): MediaLibrary.Asset[] {
+  const dupIds = new Set<string>();
+  for (let i = 0; i < assets.length - 1; i++) {
+    const a = assets[i];
+    const b = assets[i + 1];
+    const closeInTime = Math.abs(a.creationTime - b.creationTime) <= DUPLICATE_WINDOW_MS;
+    if (closeInTime && a.width === b.width && a.height === b.height && a.mediaType === b.mediaType) {
+      dupIds.add(a.id);
+      dupIds.add(b.id);
+    }
+  }
+  return assets.filter((a) => dupIds.has(a.id));
 }
 
 export async function fetchAssetPage(opts: FetchOptions): Promise<AssetPage> {
@@ -74,20 +139,35 @@ export async function fetchAssetPage(opts: FetchOptions): Promise<AssetPage> {
     mediaType,
     sortBy: [[MediaLibrary.SortBy.creationTime, ascending]],
     ...(opts.albumId ? { album: opts.albumId } : {}),
+    // Screenshots laufen als natives Query-Filter (iOS) — billig und exakt, im Gegensatz
+    // zu "large"/"duplicates", die erst nach dem Laden pro Seite nachgefiltert werden.
+    ...(opts.smartFilter === 'screenshots' ? { mediaSubtypes: ['screenshot'] as MediaLibrary.MediaSubtype[] } : {}),
   });
 
+  let assets = result.assets;
+  if (opts.smartFilter === 'large') {
+    assets = await filterLargeAssets(assets);
+  } else if (opts.smartFilter === 'duplicates') {
+    assets = filterDuplicateAssets(assets);
+  }
+
   return {
-    assets: result.assets,
+    assets,
     endCursor: result.endCursor,
     hasNextPage: result.hasNextPage,
     totalCount: result.totalCount,
   };
 }
 
-/** Gesamtzahl der Assets im aktuellen Scope (für den total-Zähler). */
+/**
+ * Gesamtzahl der Assets im aktuellen Scope (für den total-Zähler). Bei "screenshots" exakt
+ * (natives Filter), bei "large"/"duplicates" die ungefilterte Scope-Grösse — eine exakte
+ * Zahl würde die ganze Bibliothek durchgehen müssen, das ist bewusst nicht implementiert.
+ */
 export async function countAssetsInScope(opts: {
   includeVideos: boolean;
   albumId: string | null;
+  smartFilter: SmartFilter;
 }): Promise<number> {
   const mediaType = opts.includeVideos
     ? [MediaLibrary.MediaType.photo, MediaLibrary.MediaType.video]
@@ -97,6 +177,7 @@ export async function countAssetsInScope(opts: {
     first: 0,
     mediaType,
     ...(opts.albumId ? { album: opts.albumId } : {}),
+    ...(opts.smartFilter === 'screenshots' ? { mediaSubtypes: ['screenshot'] as MediaLibrary.MediaSubtype[] } : {}),
   });
   return result.totalCount;
 }
