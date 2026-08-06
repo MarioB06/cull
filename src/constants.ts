@@ -50,7 +50,5 @@ export const LARGE_FILE_THRESHOLD_BYTES = 8 * 1024 * 1024; // 8 MB
 
 // Siehe SETUP.md. Solange leer, bleibt Analytics komplett inaktiv (kein Client wird erzeugt,
 // jeder track()-Aufruf ist ein No-op) — kein Warten auf einen Key nötig, um die App zu bauen.
-export const POSTHOG_API_KEY = '';
-// PostHog Cloud US (Standard bei der Registrierung). Bei EU-Projekt auf
-// 'https://eu.i.posthog.com' ändern.
-export const POSTHOG_HOST = 'https://us.i.posthog.com';
+export const POSTHOG_API_KEY = 'phc_B63QKRiErTH3yXRvEmTZ8owPXMqJSTyu2fcmsEEQqgq6';
+export const POSTHOG_HOST = 'https://eu.i.posthog.com';
