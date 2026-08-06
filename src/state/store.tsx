@@ -500,6 +500,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     async <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
       await saveSetting(key, value);
       const next = { ...stateRef.current.settings, [key]: value } as AppSettings;
+      // dispatch() schedules the re-render but doesn't commit it synchronously — reloadGallery()
+      // below reads stateRef.current.settings before that commit happens, so without this it
+      // would reload using the settings from *before* this change (always one step stale).
+      // Keeping the ref itself in sync immediately closes that gap.
+      stateRef.current = { ...stateRef.current, settings: next };
       dispatch({ type: 'SET_SETTINGS', settings: next });
       // Scope-relevante Settings → Galerie neu laden.
       if (

@@ -20,7 +20,7 @@ const FEATURES = [
   'Unbegrenzt aufräumen',
   'Album für Album',
   'Videos einbeziehen',
-  'Smart-Filter: Screenshots, grosse Dateien, Duplikate',
+  'Smart-Filter: Screenshots, grosse Dateien',
   'Statistik: freigegebener Speicher',
 ];
 

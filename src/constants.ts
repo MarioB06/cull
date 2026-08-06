@@ -45,7 +45,3 @@ export const PRIVACY_URL = '';
 
 // Ab dieser Dateigröße gilt ein Foto/Video als "gross" für den Smart-Filter.
 export const LARGE_FILE_THRESHOLD_BYTES = 8 * 1024 * 1024; // 8 MB
-
-// Zwei Aufnahmen gelten als mögliches Duplikat, wenn sie innerhalb dieses Zeitfensters
-// entstanden sind (Serienbild-Heuristik) UND dieselbe Auflösung + denselben Medientyp haben.
-export const DUPLICATE_WINDOW_MS = 3000;

@@ -34,7 +34,6 @@ const SMART_FILTER_OPTIONS: { value: SmartFilter; label: string; hint: string }[
     label: 'Grosse Dateien',
     hint: `Ab ${formatSize(LARGE_FILE_THRESHOLD_BYTES)} pro Foto/Video`,
   },
-  { value: 'duplicates', label: 'Duplikate', hint: 'Ähnliche Serienbilder direkt hintereinander' },
 ];
 
 export default function SettingsScreen() {
@@ -236,7 +235,7 @@ export default function SettingsScreen() {
               <Text style={styles.rowHint}>
                 {isPro
                   ? (SMART_FILTER_OPTIONS.find((o) => o.value === s.smartFilter)?.label ?? 'Aus')
-                  : 'Screenshots · grosse Dateien · Duplikate'}
+                  : 'Screenshots · grosse Dateien'}
               </Text>
             </View>
             {isPro ? (

@@ -2,10 +2,11 @@ import { getDb } from './index';
 
 export type SortOrder = 'newest' | 'oldest';
 
-// 'large'/'duplicates' brauchen pro Asset zusätzliche Arbeit (Dateigröße auflösen bzw.
-// Nachbar-Vergleich) — siehe src/media/index.ts. 'screenshots' läuft direkt als natives
-// Query-Filter (iOS mediaSubtypes) und ist entsprechend am billigsten.
-export type SmartFilter = 'none' | 'screenshots' | 'large' | 'duplicates';
+// 'large' braucht pro Asset zusätzliche Arbeit (Dateigröße auflösen) — siehe
+// src/media/index.ts. 'screenshots' läuft direkt als natives Query-Filter (iOS
+// mediaSubtypes) und ist entsprechend am billigsten.
+export type SmartFilter = 'none' | 'screenshots' | 'large';
+const VALID_SMART_FILTERS: readonly SmartFilter[] = ['none', 'screenshots', 'large'];
 
 export interface AppSettings {
   sortOrder: SortOrder;
@@ -58,7 +59,10 @@ export async function loadSettings(): Promise<AppSettings> {
     haptics: bool(KEYS.haptics, DEFAULT_SETTINGS.haptics),
     albumId: raw.get(KEYS.albumId) ?? DEFAULT_SETTINGS.albumId,
     albumTitle: raw.get(KEYS.albumTitle) ?? DEFAULT_SETTINGS.albumTitle,
-    smartFilter: (raw.get(KEYS.smartFilter) as SmartFilter) || DEFAULT_SETTINGS.smartFilter,
+    // Fängt u. a. ein zuvor gespeichertes, inzwischen entferntes 'duplicates' ab.
+    smartFilter: VALID_SMART_FILTERS.includes(raw.get(KEYS.smartFilter) as SmartFilter)
+      ? (raw.get(KEYS.smartFilter) as SmartFilter)
+      : DEFAULT_SETTINGS.smartFilter,
   };
 }
 

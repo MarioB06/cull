@@ -4,7 +4,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import type { SortOrder, SmartFilter } from '../db/settings';
-import { LARGE_FILE_THRESHOLD_BYTES, DUPLICATE_WINDOW_MS } from '../constants';
+import { LARGE_FILE_THRESHOLD_BYTES } from '../constants';
 
 export type { Asset } from 'expo-media-library';
 
@@ -102,29 +102,6 @@ async function filterLargeAssets(assets: MediaLibrary.Asset[]): Promise<MediaLib
   return assets.filter((_, i) => isLarge[i]);
 }
 
-/**
- * Smart-Filter "Duplikate": einfache Serienbild-Heuristik auf Basis der bereits
- * vorhandenen Metadaten (kein zusätzlicher nativer Aufruf nötig) — zwei direkt
- * aufeinanderfolgende Aufnahmen (Liste ist nach creationTime sortiert) gelten als
- * Duplikat-Paar, wenn sie innerhalb von DUPLICATE_WINDOW_MS, mit gleicher Auflösung und
- * gleichem Medientyp entstanden sind. Erkennt bewusst nur angrenzende Paare pro Seite
- * (keine Seiten-übergreifende oder inhaltliche Bildanalyse) — für den typischen
- * "5x fast das gleiche Foto"-Fall reicht das.
- */
-function filterDuplicateAssets(assets: MediaLibrary.Asset[]): MediaLibrary.Asset[] {
-  const dupIds = new Set<string>();
-  for (let i = 0; i < assets.length - 1; i++) {
-    const a = assets[i];
-    const b = assets[i + 1];
-    const closeInTime = Math.abs(a.creationTime - b.creationTime) <= DUPLICATE_WINDOW_MS;
-    if (closeInTime && a.width === b.width && a.height === b.height && a.mediaType === b.mediaType) {
-      dupIds.add(a.id);
-      dupIds.add(b.id);
-    }
-  }
-  return assets.filter((a) => dupIds.has(a.id));
-}
-
 export async function fetchAssetPage(opts: FetchOptions): Promise<AssetPage> {
   const mediaType = opts.includeVideos
     ? [MediaLibrary.MediaType.photo, MediaLibrary.MediaType.video]
@@ -140,15 +117,13 @@ export async function fetchAssetPage(opts: FetchOptions): Promise<AssetPage> {
     sortBy: [[MediaLibrary.SortBy.creationTime, ascending]],
     ...(opts.albumId ? { album: opts.albumId } : {}),
     // Screenshots laufen als natives Query-Filter (iOS) — billig und exakt, im Gegensatz
-    // zu "large"/"duplicates", die erst nach dem Laden pro Seite nachgefiltert werden.
+    // zu "large", das erst nach dem Laden pro Seite nachgefiltert wird.
     ...(opts.smartFilter === 'screenshots' ? { mediaSubtypes: ['screenshot'] as MediaLibrary.MediaSubtype[] } : {}),
   });
 
   let assets = result.assets;
   if (opts.smartFilter === 'large') {
     assets = await filterLargeAssets(assets);
-  } else if (opts.smartFilter === 'duplicates') {
-    assets = filterDuplicateAssets(assets);
   }
 
   return {
@@ -161,8 +136,8 @@ export async function fetchAssetPage(opts: FetchOptions): Promise<AssetPage> {
 
 /**
  * Gesamtzahl der Assets im aktuellen Scope (für den total-Zähler). Bei "screenshots" exakt
- * (natives Filter), bei "large"/"duplicates" die ungefilterte Scope-Grösse — eine exakte
- * Zahl würde die ganze Bibliothek durchgehen müssen, das ist bewusst nicht implementiert.
+ * (natives Filter), bei "large" die ungefilterte Scope-Grösse — eine exakte Zahl würde die
+ * ganze Bibliothek durchgehen müssen, das ist bewusst nicht implementiert.
  */
 export async function countAssetsInScope(opts: {
   includeVideos: boolean;
